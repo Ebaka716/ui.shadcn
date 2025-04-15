@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react"; // Import React hooks
 import { useRouter } from 'next/navigation'; // Import useRouter
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge"; // Import Badge
 import {
   Command,
   CommandInput,
@@ -22,34 +23,36 @@ import {
 //   DropdownMenuTrigger,
 // } from "@/components/ui/dropdown-menu";
 
-// Component list (add type)
-const COMPONENT_DATA = [
-  "Accordion", "Alert", "AlertDialog", "AspectRatio", "Avatar", "Badge",
-  "Breadcrumb", "Button", "Calendar", "Card", "Carousel", "Chart",
-  "Checkbox", "Collapsible", "Command", "ContextMenu", "DataTable",
-  "DatePicker", "Dialog", "Drawer", "DropdownMenu", "Form", "HoverCard",
-  "Input", "InputOTP", "Label", "Menubar", "NavigationMenu", "Pagination",
-  "Popover", "Progress", "RadioGroup", "Resizable", "ScrollArea", "Select",
-  "Separator", "Sheet", "Sidebar", "Skeleton", "Slider", "Sonner",
-  "Switch", "Table", "Tabs", "Textarea", "Toast", "Toggle",
-  "ToggleGroup", "Tooltip"
-].map(name => ({ value: name, type: 'component' }));
-
 // Sample Financial Data (add type)
 const FINANCIAL_DATA = [
   { value: 'AAPL', type: 'ticker' },
   { value: 'GOOGL', type: 'ticker' },
   { value: 'MSFT', type: 'ticker' },
+  { value: 'AMZN', type: 'ticker' },
+  { value: 'TSLA', type: 'ticker' },
+  { value: 'NVDA', type: 'ticker' },
+  { value: 'S&P 500', type: 'index' },
+  { value: 'Dow Jones', type: 'index' },
+  { value: 'NASDAQ Composite', type: 'index' },
   { value: 'Checking Account', type: 'account' },
   { value: 'Savings Account', type: 'account' },
   { value: 'Investment Portfolio', type: 'account' },
   { value: 'Market Cap', type: 'term' },
   { value: 'Dividend Yield', type: 'term' },
   { value: 'P/E Ratio', type: 'term' },
+  { value: 'Inflation Rate', type: 'term' },
+  { value: 'Interest Rates', type: 'term' },
+  { value: 'GDP Growth', type: 'term' },
+  { value: 'Volatility (VIX)', type: 'term' },
+  { value: 'Bond', type: 'term' },
+  { value: 'ETF (Exchange Traded Fund)', type: 'term' },
+  { value: 'Mutual Fund', type: 'term' },
+  { value: 'Earnings Per Share (EPS)', type: 'metric' },
+  { value: 'Return on Investment (ROI)', type: 'metric' },
 ];
 
-// Combine data sources
-const ALL_SUGGESTIONS = [...COMPONENT_DATA, ...FINANCIAL_DATA];
+// Combine data sources - Only include FINANCIAL_DATA
+const ALL_SUGGESTIONS = [...FINANCIAL_DATA];
 
 export default function Home() {
   const router = useRouter(); // Get router instance
@@ -111,7 +114,7 @@ export default function Home() {
       <form onSubmit={handleFormSubmit} className="w-full max-w-xl mb-6">
         <Command className="rounded-lg border shadow-md overflow-visible relative">
           <CommandInput
-            placeholder="Search components or financial terms..."
+            placeholder="Search financial terms..."
             value={inputValue}
             onValueChange={(value) => {
                setInputValue(value);
@@ -124,20 +127,7 @@ export default function Home() {
             <CommandList className="absolute top-full mt-1 w-full rounded-md border bg-popover shadow-lg z-10">
               {suggestions.length > 0 ? (
                 <>
-                  {groupedSuggestions.component && (
-                    <CommandGroup heading="Components">
-                      {groupedSuggestions.component.map((suggestion) => (
-                        <CommandItem
-                          key={`comp-${suggestion.value}`}
-                          value={suggestion.value}
-                          onSelect={() => handleSelect(suggestion.value)}
-                        >
-                          {suggestion.value}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                 )}
-                 {['ticker', 'account', 'term'].map(type => 
+                  {['ticker', 'index', 'account', 'term', 'metric'].map(type => 
                     groupedSuggestions[type] && (
                       <CommandGroup heading={type.charAt(0).toUpperCase() + type.slice(1) + 's'} key={type}>
                          {groupedSuggestions[type].map((suggestion) => (
@@ -145,8 +135,10 @@ export default function Home() {
                             key={`${type}-${suggestion.value}`}
                             value={suggestion.value}
                             onSelect={() => handleSelect(suggestion.value)}
+                            className="flex items-center gap-2"
                           >
-                            {suggestion.value}
+                            <Badge variant="secondary" className="capitalize">{suggestion.type}</Badge>
+                            <span>{suggestion.value}</span>
                           </CommandItem>
                         ))}
                       </CommandGroup>
