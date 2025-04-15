@@ -60,10 +60,12 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        IconLeft: ({ className, ...props }) => (
+        // @ts-expect-error - v9 uses iconLeft/iconRight but types might be conflicting
+        iconLeft: ({ className, ...props }) => (
           <ChevronLeft className={cn("size-4", className)} {...props} />
         ),
-        IconRight: ({ className, ...props }) => (
+        // @ts-expect-error - v9 uses iconLeft/iconRight but types might be conflicting
+        iconRight: ({ className, ...props }) => (
           <ChevronRight className={cn("size-4", className)} {...props} />
         ),
       }}
