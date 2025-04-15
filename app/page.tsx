@@ -109,7 +109,7 @@ export default function Home() {
       </h1>
 
       <form onSubmit={handleFormSubmit} className="w-full max-w-xl mb-6">
-        <Command className="rounded-lg border shadow-md overflow-visible relative h-14 flex [&_[cmdk-input-wrapper]]:border-b-0">
+        <Command className="rounded-lg border shadow-md overflow-visible relative">
           <CommandInput
             placeholder="Search components or financial terms..."
             value={inputValue}
@@ -117,7 +117,7 @@ export default function Home() {
                setInputValue(value);
             }}
             onFocus={() => setIsListOpen(suggestions.length > 0 && !!inputValue)}
-            className="h-full [&_[cmdk-input-wrapper]]:border-b-0"
+            className=""
           />
 
           {isListOpen && (
@@ -177,9 +177,9 @@ export default function Home() {
         </Button>
         <Button 
           variant="outline"
-          onClick={() => navigateToResults('Im Feeling Lucky')}
+          onClick={() => router.push('/advisor')}
         >
-          I&apos;m Feeling Lucky
+          Check in with an Advisor
         </Button>
       </div>
     </main>
