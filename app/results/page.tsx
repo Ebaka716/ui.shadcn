@@ -83,14 +83,21 @@ function getMyNewsData() {
 
 // --- Component ---
 
-// Temporarily remove searchParams from props
-export default function ResultsPage(/* { ... } */) {
+// Restore the props definition
+export default function ResultsPage({ 
+  searchParams 
+}: { 
+  searchParams?: { [key: string]: string | string[] | undefined } 
+}) {
   
-  // Temporarily remove searchParams usage
-  const query = "Test Query (Debug)"; // Hardcoded for testing
+  // Restore searchParams usage
+  const rawQuery = searchParams?.query;
+  const query = typeof rawQuery === 'string' ? decodeURIComponent(rawQuery) : 'No query specified';
+  // const query = "Test Query (Debug)"; // Removed hardcoded value
 
-  // Temporarily force isMyNewsQuery to false to satisfy linter and test build
-  const isMyNewsQuery = false; // query === 'myNews'; 
+  // Restore dynamic check for isMyNewsQuery 
+  const isMyNewsQuery = query === 'myNews'; 
+  // const isMyNewsQuery = false; // Removed hardcoded value
   const myNewsData = isMyNewsQuery ? getMyNewsData() : null;
   const stockData = !isMyNewsQuery ? getStockData(query) : null;
   const generalInfo = !isMyNewsQuery && !stockData ? getGeneralInfo(query) : null;
