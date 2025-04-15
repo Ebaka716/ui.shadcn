@@ -83,11 +83,11 @@ function getMyNewsData() {
 
 // --- Component ---
 
-interface ResultsPageProps {
-  searchParams?: { [key: string]: string | string[] | undefined };
-}
-
-export default function ResultsPage({ searchParams }: ResultsPageProps) {
+export default function ResultsPage({ 
+  searchParams 
+}: { 
+  searchParams?: { [key: string]: string | string[] | undefined } 
+}) {
   const rawQuery = searchParams?.query;
   const query = typeof rawQuery === 'string' ? decodeURIComponent(rawQuery) : 'No query specified';
 
