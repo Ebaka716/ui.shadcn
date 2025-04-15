@@ -87,7 +87,7 @@ function getMyNewsData() {
 export default function ResultsPage({ 
   searchParams 
 }: { 
-  // searchParams?: { [key: string]: string | string[] | undefined } // Original type
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   searchParams?: any // Use any type for build compatibility
 }) {
   
