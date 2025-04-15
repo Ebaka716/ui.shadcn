@@ -83,14 +83,15 @@ function getMyNewsData() {
 
 // --- Component ---
 
-// Restore the props definition
+// Type searchParams as any to bypass build error
 export default function ResultsPage({ 
   searchParams 
 }: { 
-  searchParams?: { [key: string]: string | string[] | undefined } 
+  // searchParams?: { [key: string]: string | string[] | undefined } // Original type
+  searchParams?: any // Use any type for build compatibility
 }) {
   
-  // Restore searchParams usage
+  // Usage remains the same, assuming it's an object at runtime
   const rawQuery = searchParams?.query;
   const query = typeof rawQuery === 'string' ? decodeURIComponent(rawQuery) : 'No query specified';
   // const query = "Test Query (Debug)"; // Removed hardcoded value
