@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input } from "@/components/ui/input";
 import { Button } from '@/components/ui/button';
-import { Send, Paperclip, ChevronDown, Filter } from 'lucide-react';
+import { Send, Paperclip, Filter } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,

@@ -219,7 +219,7 @@ export default function ResultsPage({ searchParams }: ResultsPageProps) {
                 )}
                  {generalInfo && (
                   <CardDescription>
-                    Simulated information for "{query}"
+                    Simulated information for &quot;{query}&quot;
                   </CardDescription>
                 )}
               </CardHeader>
@@ -311,7 +311,7 @@ export default function ResultsPage({ searchParams }: ResultsPageProps) {
 
                 {/* Fallback if no specific data generated */}
                 {!stockData && !generalInfo && (
-                     <p className="text-muted-foreground">Could not generate specific data for "{query}".</p>
+                     <p className="text-muted-foreground">Could not generate specific data for &quot;{query}&quot;.</p>
                 )}
 
               </CardContent>
