@@ -164,19 +164,19 @@ export default function Home() {
 
       <div className="flex space-x-4">
         <Button 
-          className="bg-purple-600 hover:bg-purple-700 text-white"
+          variant="outline"
           onClick={() => navigateToResults('AAPL')}
         >
           How&apos;s AAPL doing?
         </Button>
         <Button 
-          className="bg-purple-600 hover:bg-purple-700 text-white"
+          variant="outline"
           onClick={() => navigateToResults('myNews')}
         >
           What news has affected me today?
         </Button>
         <Button 
-          className="bg-purple-600 hover:bg-purple-700 text-white"
+          variant="outline"
           onClick={() => navigateToResults('Im Feeling Lucky')}
         >
           I&apos;m Feeling Lucky
