@@ -3,7 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import React, { useState, useEffect, Fragment, useRef, useLayoutEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, TrendingDown, Newspaper, Info, Briefcase, Activity, Lightbulb } from 'lucide-react';
+import { TrendingUp, TrendingDown, Newspaper, Info, Briefcase, Activity, Lightbulb, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -20,8 +20,6 @@ import { Separator } from "@/components/ui/separator";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, type ChartConfig } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, Bar, BarChart } from 'recharts';
 import { v4 as uuidv4 } from 'uuid'; // Import uuid
-// Import Skeleton component
-import { Skeleton } from "@/components/ui/skeleton";
 
 // --- Helper functions (Could potentially be moved to a separate utils file) ---
 
@@ -329,7 +327,15 @@ export default function ResultsDisplay() {
                   {/* News Card */}
                   <Card className="shadow-none">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Top News Affecting You</CardTitle><Newspaper className="h-5 w-5 text-muted-foreground" /></CardHeader>
-                    <CardContent><ul className="space-y-3">{entry.myNewsData.newsItems.map(item => (<li key={item.id} className="text-sm border-b pb-2 last:border-none"><p className="font-medium">{item.headline}</p><p className="text-xs text-muted-foreground">{item.source} - Impact:<Badge variant={item.impact === 'Positive' ? 'default' : item.impact === 'Negative' ? 'destructive' : 'secondary'} className="ml-1 text-xs">{item.impact}</Badge></p></li>))}</ul></CardContent>
+                    <CardContent><ul className="space-y-3">{entry.myNewsData.newsItems.map(item => (
+                      <li key={item.id} className="text-sm border-b pb-3 last:border-none flex justify-between items-start gap-4">
+                        <div className="flex-grow">
+                          <p className="font-medium">{item.headline}</p>
+                          <p className="text-xs text-muted-foreground">{item.source}</p>
+                        </div>
+                        <Badge variant={item.impact === 'Positive' ? 'default' : item.impact === 'Negative' ? 'destructive' : 'outline'} className="ml-1 text-xs flex-shrink-0 mt-0.5">{item.impact}</Badge>
+                      </li>
+                    ))}</ul></CardContent>
                   </Card>
                   {/* Account/Movers Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -446,20 +452,11 @@ export default function ResultsDisplay() {
         </Fragment>
       ))}
 
-      {/* Re-introduce separate loading indicator block */}
+      {/* Replace skeleton card with spinner */}
       {isLoadingNewSection && (
-        <div className="w-full pt-5 border-t mt-6"> 
-          <Card className="shadow-none animate-pulse">
-            <CardHeader>
-              <Skeleton className="h-6 w-3/4" /> 
-            </CardHeader>
-            <CardContent className="space-y-2"> 
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-5/6" />
-              <Skeleton className="h-4 w-full" />
-            </CardContent>
-          </Card>
-          <p className="text-sm text-muted-foreground pt-2 text-center">Loading results for: {processingQueryRef.current ?? currentQuery}...</p>
+        <div className="w-full pt-12 border-t mt-6 flex flex-col items-center justify-center"> 
+           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+           <p className="text-sm text-muted-foreground pt-2 text-center">Loading results for: {processingQueryRef.current ?? currentQuery}...</p>
         </div>
       )}
       
