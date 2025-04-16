@@ -291,6 +291,21 @@ export default function ResultsDisplay() {
 
       {/* Fallback if no data type matches */}
       {!myNewsData && !stockData && !generalInfo && ( <Card><CardHeader><CardTitle>No Results</CardTitle></CardHeader><CardContent><p>Could not fetch or generate data for &quot;{query}&quot;. Please try another query.</p></CardContent></Card> )}
+
+      {/* Placeholder Content for Scrolling Demo */}
+      {[...Array(5)].map((_, i) => (
+        <Card key={i}>
+          <CardHeader>
+            <CardTitle>Placeholder Card {i + 1}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+            <br/>
+            <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+          </CardContent>
+        </Card>
+      ))}
+
     </div>
   );
 } 
