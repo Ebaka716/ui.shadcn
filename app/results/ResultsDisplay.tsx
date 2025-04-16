@@ -1,10 +1,9 @@
 "use client";
 
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, TrendingUp, TrendingDown, Newspaper, Info, Briefcase, Activity, Lightbulb } from 'lucide-react';
+import { TrendingUp, TrendingDown, Newspaper, Info, Briefcase, Activity, Lightbulb } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -214,7 +213,7 @@ export default function ResultsDisplay() {
   if (isLoading) {
       return (
           <div className="w-full max-w-[800px] text-center py-10">
-              <p className="text-muted-foreground">Loading results for "{query}"...</p>
+              <p className="text-muted-foreground">Loading results for &quot;{query}&quot;...</p>
           </div>
       );
   }
@@ -292,11 +291,4 @@ export default function ResultsDisplay() {
       {!myNewsData && !stockData && !generalInfo && ( <Card><CardHeader><CardTitle>No Results</CardTitle></CardHeader><CardContent><p>Could not fetch or generate data for &quot;{query}&quot;. Please try another query.</p></CardContent></Card> )}
     </div>
   );
-}
-
-// Note: Removed the long interactiveLineChartData array definition here
-// It's better defined within the component or imported if large
-const interactiveLineChartDataShort = [
-  { date: "2024-04-01", desktop: 222, mobile: 150 }, { date: "2024-04-02", desktop: 97, mobile: 180 }, /* ... */ { date: "2024-06-30", desktop: 446, mobile: 400 },
-];
-// Re-apply the full data inside the component if needed, or manage it better. 
+} 
