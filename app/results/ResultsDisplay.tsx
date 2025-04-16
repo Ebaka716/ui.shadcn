@@ -176,10 +176,10 @@ export default function ResultsDisplay() {
   const [myNewsData, setMyNewsData] = useState<ReturnType<typeof getMyNewsData> | null>(null);
   const [lineChartData, setLineChartData] = useState<LineChartDataPoint[]>([]);
   const [pieChartData, setPieChartData] = useState<PieChartDataPoint[]>([]);
-  const [isLoading, setIsLoading] = useState(true); // Still manage loading state here
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setIsLoading(true); // Start loading when query changes
+    setIsLoading(true);
     const isMyNews = query === 'myNews';
 
     // Simulate data fetching/generation
@@ -205,11 +205,13 @@ export default function ResultsDisplay() {
       setPieChartData([]);
     }
 
-    setIsLoading(false); // Finish loading
+    setIsLoading(false);
+    // Scroll to top after loading is finished
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
   }, [query]);
 
-  // Loading state handled by Suspense fallback in parent, but we can show internal loading too
+  // Loading state
   if (isLoading) {
       return (
           <div className="w-full max-w-[800px] text-center py-10">

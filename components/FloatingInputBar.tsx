@@ -23,6 +23,7 @@ export function FloatingInputBar() {
     event.preventDefault();
     if (!inputValue) return;
     router.push(`/results?query=${encodeURIComponent(inputValue)}&focus=${encodeURIComponent(focusMode)}`);
+    setInputValue("");
   };
 
   return (
