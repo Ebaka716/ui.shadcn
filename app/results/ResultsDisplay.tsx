@@ -1,9 +1,9 @@
 "use client";
 
 import { useSearchParams } from 'next/navigation';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Fragment, useRef, useLayoutEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, TrendingDown, Newspaper, Info, Briefcase, Activity, Lightbulb } from 'lucide-react';
+import { TrendingUp, TrendingDown, Newspaper, Info, Briefcase, Activity, Lightbulb, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -19,6 +19,9 @@ import { Separator } from "@/components/ui/separator";
 // Import Chart Components
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, type ChartConfig } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, Bar, BarChart } from 'recharts';
+import { v4 as uuidv4 } from 'uuid'; // Import uuid
+// Import Skeleton component
+import { Skeleton } from "@/components/ui/skeleton";
 
 // --- Helper functions (Could potentially be moved to a separate utils file) ---
 
@@ -26,6 +29,14 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, C
 function getStockData(ticker: string) {
   const isTicker = /^[A-Z]{1,5}$/.test(ticker);
   if (!isTicker) return null;
+  
+  // Simulate company name based on ticker (very basic)
+  const companyName = 
+    ticker === "AAPL" ? "Apple Inc." : 
+    ticker === "GOOGL" ? "Alphabet Inc." : 
+    ticker === "MSFT" ? "Microsoft Corporation" :
+    `${ticker} Holdings Inc.`; // Generic fallback
+
   const price = (Math.random() * 1000 + 50).toFixed(2);
   const change = (Math.random() * 50 - 25);
   const changePercent = (change / parseFloat(price) * 100).toFixed(2);
@@ -35,7 +46,21 @@ function getStockData(ticker: string) {
   const dividendYield = (Math.random() * 5).toFixed(2) + '%';
   const analystRating = Math.random() > 0.6 ? 'Buy' : Math.random() > 0.3 ? 'Hold' : 'Sell';
   const ratingValue = analystRating === 'Buy' ? 85 : analystRating === 'Hold' ? 50 : 20;
-  return { ticker, price, change: change.toFixed(2), changePercent, volume, marketCap, peRatio, dividendYield, analystRating, ratingValue, isUp: change >= 0 };
+  
+  return { 
+    ticker, 
+    companyName, // Added company name
+    price, 
+    change: change.toFixed(2), 
+    changePercent, 
+    volume, 
+    marketCap, 
+    peRatio, 
+    dividendYield, 
+    analystRating, 
+    ratingValue, 
+    isUp: change >= 0 
+  };
 }
 
 // Simulate general info
@@ -164,147 +189,280 @@ function InteractiveLineChartComponent() {
 interface LineChartDataPoint { month: string; value: number; }
 interface PieChartDataPoint { category: string; value: number; fill: string; }
 
+// Define the structure for each history entry
+interface ResultEntry {
+  id: string; // Unique key
+  query: string;
+  stockData: ReturnType<typeof getStockData> | null;
+  generalInfo: ReturnType<typeof getGeneralInfo> | null;
+  myNewsData: ReturnType<typeof getMyNewsData> | null;
+  // Include chart data specific to this entry if generated dynamically
+  lineChartData: LineChartDataPoint[];
+  pieChartData: PieChartDataPoint[];
+}
+
 // --- Main Display Component ---
 export default function ResultsDisplay() {
   const searchParams = useSearchParams();
-  const rawQuery = searchParams.get('query');
-  const query = typeof rawQuery === 'string' ? decodeURIComponent(rawQuery) : 'No query specified';
+  const currentQuery = searchParams.get('query') || 'No query specified';
 
-  // State for data
-  const [stockData, setStockData] = useState<ReturnType<typeof getStockData> | null>(null);
-  const [generalInfo, setGeneralInfo] = useState<ReturnType<typeof getGeneralInfo> | null>(null);
-  const [myNewsData, setMyNewsData] = useState<ReturnType<typeof getMyNewsData> | null>(null);
-  const [lineChartData, setLineChartData] = useState<LineChartDataPoint[]>([]);
-  const [pieChartData, setPieChartData] = useState<PieChartDataPoint[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [resultsHistory, setResultsHistory] = useState<ResultEntry[]>([]);
+  const [isLoadingNewSection, setIsLoadingNewSection] = useState<boolean>(false);
+  
+  const processingQueryRef = useRef<string | null>(null);
+  const historyContainerRef = useRef<HTMLDivElement>(null);
+  const prevHistoryLengthRef = useRef<number>(0);
 
+  // Effect to process new queries (with delay)
   useEffect(() => {
-    setIsLoading(true);
-    const isMyNews = query === 'myNews';
-
-    // Simulate data fetching/generation
-    setMyNewsData(isMyNews ? getMyNewsData() : null);
-    const currentStockData = !isMyNews ? getStockData(query) : null;
-    setStockData(currentStockData);
-    setGeneralInfo(!isMyNews && !currentStockData ? getGeneralInfo(query) : null);
-
-    // Generate chart data only if stockData is present
-    if (currentStockData) {
-      setLineChartData([
-        { month: "Jan", value: 186 }, { month: "Feb", value: 205 }, { month: "Mar", value: 237 },
-        { month: "Apr", value: 225 }, { month: "May", value: 273 }, { month: "Jun", value: 301 },
-      ]);
-      setPieChartData([
-        { category: "Equities", value: 4500, fill: "var(--color-equities)" },
-        { category: "Bonds", value: 2500, fill: "var(--color-bonds)" },
-        { category: "Cash", value: 800, fill: "var(--color-cash)" },
-        { category: "Alternatives", value: 1200, fill: "var(--color-alternatives)" },
-      ]);
-    } else {
-      setLineChartData([]);
-      setPieChartData([]);
+    // Check 1: Against latest history entry
+    if (currentQuery === resultsHistory[resultsHistory.length - 1]?.query) {
+      processingQueryRef.current = currentQuery; 
+      return; 
+    }
+    
+    // Check 2: Against query currently being processed (ref)
+    if (currentQuery === processingQueryRef.current) {
+        return;
     }
 
-    setIsLoading(false);
-    // Scroll to top after loading is finished
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // If checks pass, start the process with a delay
+    const startProcessingWithDelay = () => {
+      processingQueryRef.current = currentQuery;
+      setIsLoadingNewSection(true);
+      const queryToProcess = currentQuery; 
 
-  }, [query]);
+      const timerId = setTimeout(async () => {
+        // Fetch/simulate data using the captured queryToProcess
+        const isMyNews = queryToProcess === 'myNews';
+        const newStockData = !isMyNews ? getStockData(queryToProcess) : null;
+        const newGeneralInfo = !isMyNews && !newStockData ? getGeneralInfo(queryToProcess) : null;
+        const newMyNewsData = isMyNews ? getMyNewsData() : null;
 
-  // Loading state
-  if (isLoading) {
-      return (
-          <div className="w-full max-w-[800px] text-center py-10">
-              <p className="text-muted-foreground">Loading results for &quot;{query}&quot;...</p>
-          </div>
-      );
-  }
+        // Generate chart data
+        let newLineChartData: LineChartDataPoint[] = [];
+        let newPieChartData: PieChartDataPoint[] = [];
+        if (newStockData) {
+          newLineChartData = [
+            { month: "Jan", value: 186 }, { month: "Feb", value: 205 }, { month: "Mar", value: 237 },
+            { month: "Apr", value: 225 }, { month: "May", value: 273 }, { month: "Jun", value: 301 },
+          ];
+          newPieChartData = [
+            { category: "Equities", value: 4500, fill: "var(--color-equities)" },
+            { category: "Bonds", value: 2500, fill: "var(--color-bonds)" },
+            { category: "Cash", value: 800, fill: "var(--color-cash)" },
+            { category: "Alternatives", value: 1200, fill: "var(--color-alternatives)" },
+          ];
+        }
 
-  // --- Render Logic (Copied from original page, adjusted slightly) ---
+        // Create the new entry
+        const newEntry: ResultEntry = {
+          id: uuidv4(),
+          query: queryToProcess, // Use the captured query
+          stockData: newStockData,
+          generalInfo: newGeneralInfo,
+          myNewsData: newMyNewsData,
+          lineChartData: newLineChartData,
+          pieChartData: newPieChartData,
+        };
+
+        // Important: Use functional update to ensure we have the latest history
+        setResultsHistory(prev => [...prev, newEntry]);
+        setIsLoadingNewSection(false);
+        processingQueryRef.current = null; // Reset ref after completion
+
+      }, 2000);
+
+      return () => clearTimeout(timerId);
+    };
+
+    startProcessingWithDelay();
+
+  }, [currentQuery, resultsHistory]); // Keep resultsHistory for Check 1
+
+  // --- NEW: Effect to scroll down when loading starts ---
+  useEffect(() => {
+    if (isLoadingNewSection) {
+      // Scroll smoothly to the bottom of the page to show the loader
+      window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  }, [isLoadingNewSection]); // Runs only when isLoadingNewSection changes
+  // --- END NEW EFFECT ---
+
+  // LayoutEffect for scrolling (remains unchanged)
+  useLayoutEffect(() => {
+    if (resultsHistory.length > prevHistoryLengthRef.current) {
+        const latestEntryId = resultsHistory[resultsHistory.length - 1]?.id;
+        if (latestEntryId) {
+            const targetElementId = `title-${latestEntryId}`;
+            const targetElement = document.getElementById(targetElementId);
+            if (targetElement) {
+                targetElement.scrollIntoView({ 
+                    behavior: "smooth",
+                    block: "start" 
+                });
+            }
+        }
+    }
+    prevHistoryLengthRef.current = resultsHistory.length;
+  }, [resultsHistory]);
+
   return (
-    <div className="w-full max-w-[800px] space-y-6">
-      {/* Back Button (Moved to parent page.tsx) */}
-      {/* <div className="w-full mb-8 self-start"> ... </div> */}
+    <div ref={historyContainerRef} className="w-full max-w-[800px] space-y-6">
+      
+      {/* Map over the history */}
+      {resultsHistory.map((entry) => (
+        <Fragment key={entry.id}>
+           <h2 id={`title-${entry.id}`} className="text-xl font-semibold pt-4 border-t mt-6">Results for: {entry.query}</h2>
 
-      {/* Content */}
-      {/* Layout for "myNews" Query */}
-      {myNewsData && (
-          <div className="space-y-6">
-            {/* Title */}
-            <h1 className="text-2xl font-semibold mb-4">Your Daily Digest</h1>
-            {/* News Card */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Top News Affecting You</CardTitle><Newspaper className="h-5 w-5 text-muted-foreground" /></CardHeader>
-              <CardContent><ul className="space-y-3">{myNewsData.newsItems.map(item => (<li key={item.id} className="text-sm border-b pb-2 last:border-none"><p className="font-medium">{item.headline}</p><p className="text-xs text-muted-foreground">{item.source} - Impact:<Badge variant={item.impact === 'Positive' ? 'default' : item.impact === 'Negative' ? 'destructive' : 'secondary'} className="ml-1 text-xs">{item.impact}</Badge></p></li>))}</ul></CardContent>
-            </Card>
-            {/* Account/Movers Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Account Overview</CardTitle><Briefcase className="h-5 w-5 text-muted-foreground" /></CardHeader>
-                <CardContent><Table><TableHeader><TableRow><TableHead>Account</TableHead><TableHead className="text-right">Balance</TableHead><TableHead className="text-right">Change</TableHead></TableRow></TableHeader><TableBody>{myNewsData.accounts.map(acc => (<TableRow key={acc.id}><TableCell className="font-medium">{acc.name}</TableCell><TableCell className="text-right">{acc.balance}</TableCell><TableCell className={`text-right text-xs ${acc.change.startsWith('+') ? 'text-green-600' : acc.change.startsWith('-') ? 'text-red-600' : 'text-muted-foreground'}`}>{acc.change}</TableCell></TableRow>))}</TableBody></Table></CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Daily Movers</CardTitle><Activity className="h-5 w-5 text-muted-foreground" /></CardHeader>
-                <CardContent><ul className="space-y-2">{myNewsData.movers.map(mover => (<li key={mover.id} className="flex justify-between items-center text-sm"><span className="font-medium">{mover.ticker}</span><Badge variant={mover.changePercent.startsWith('+') ? 'default' : 'destructive'}>{mover.changePercent}</Badge></li>))}</ul></CardContent>
-              </Card>
-            </div>
-            {/* Next Actions */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Suggested Next Steps</CardTitle><Lightbulb className="h-5 w-5 text-muted-foreground" /></CardHeader>
-              <CardContent><ul className="space-y-2 text-sm">{myNewsData.nextActions.map(action => (<li key={action.id} className="flex items-center"><Button variant="link" size="sm" className="p-0 h-auto mr-2 text-muted-foreground hover:text-primary">{action.text}</Button></li>))}</ul></CardContent>
-            </Card>
-          </div>
-      )}
+           {/* Render based on data within the entry */}
+           {entry.myNewsData && (
+             <div className="space-y-6">
+               {/* Title */}
+               {/* <h1 className="text-2xl font-semibold mb-4">Your Daily Digest</h1> */} {/* Title is now per entry */} 
+               {/* News Card */}
+               <Card>
+                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Top News Affecting You</CardTitle><Newspaper className="h-5 w-5 text-muted-foreground" /></CardHeader>
+                 <CardContent><ul className="space-y-3">{entry.myNewsData.newsItems.map(item => (<li key={item.id} className="text-sm border-b pb-2 last:border-none"><p className="font-medium">{item.headline}</p><p className="text-xs text-muted-foreground">{item.source} - Impact:<Badge variant={item.impact === 'Positive' ? 'default' : item.impact === 'Negative' ? 'destructive' : 'secondary'} className="ml-1 text-xs">{item.impact}</Badge></p></li>))}</ul></CardContent>
+               </Card>
+               {/* Account/Movers Grid */}
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <Card>
+                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Account Overview</CardTitle><Briefcase className="h-5 w-5 text-muted-foreground" /></CardHeader>
+                   <CardContent><Table><TableHeader><TableRow><TableHead>Account</TableHead><TableHead className="text-right">Balance</TableHead><TableHead className="text-right">Change</TableHead></TableRow></TableHeader><TableBody>{entry.myNewsData.accounts.map(acc => (<TableRow key={acc.id}><TableCell className="font-medium">{acc.name}</TableCell><TableCell className="text-right">{acc.balance}</TableCell><TableCell className={`text-right text-xs ${acc.change.startsWith('+') ? 'text-green-600' : acc.change.startsWith('-') ? 'text-red-600' : 'text-muted-foreground'}`}>{acc.change}</TableCell></TableRow>))}</TableBody></Table></CardContent>
+                 </Card>
+                 <Card>
+                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Daily Movers</CardTitle><Activity className="h-5 w-5 text-muted-foreground" /></CardHeader>
+                   <CardContent><ul className="space-y-2">{entry.myNewsData.movers.map(mover => (<li key={mover.id} className="flex justify-between items-center text-sm"><span className="font-medium">{mover.ticker}</span><Badge variant={mover.changePercent.startsWith('+') ? 'default' : 'destructive'}>{mover.changePercent}</Badge></li>))}</ul></CardContent>
+                 </Card>
+               </div>
+               {/* Next Actions */}
+               <Card>
+                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Suggested Next Steps</CardTitle><Lightbulb className="h-5 w-5 text-muted-foreground" /></CardHeader>
+                 <CardContent><ul className="space-y-2 text-sm">{entry.myNewsData.nextActions.map(action => (<li key={action.id} className="flex items-center"><Button variant="link" size="sm" className="p-0 h-auto mr-2 text-muted-foreground hover:text-primary">{action.text}</Button></li>))}</ul></CardContent>
+               </Card>
+             </div>
+           )}
 
-      {/* Layout for Stock Ticker Query */}
-      {stockData && (
-        <div className="space-y-6">
-          {/* Stock Header */}
-          <div className="flex items-baseline justify-between">
-            <h1 className="text-3xl font-bold">{stockData.ticker}</h1>
-            <div className={`text-xl font-semibold ${stockData.isUp ? 'text-green-600' : 'text-red-600'}`}>${stockData.price}<span className="text-sm ml-2">({stockData.change} / {stockData.changePercent}%) {stockData.isUp ? <TrendingUp className="inline h-4 w-4 ml-1" /> : <TrendingDown className="inline h-4 w-4 ml-1" />}</span></div>
-          </div>
-          <Separator />
-          {/* Key Metrics */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            {stockData.volume && (<div className="flex items-center"><p className="text-sm font-medium">Volume:</p><p className="text-sm ml-2">{stockData.volume}</p></div>)}
-            {stockData.marketCap && (<div className="flex items-center"><p className="text-sm font-medium">Market Cap:</p><p className="text-sm ml-2">{stockData.marketCap}</p></div>)}
-            {stockData.peRatio && (<div className="flex items-center"><p className="text-sm font-medium">P/E Ratio:</p><p className="text-sm ml-2">{stockData.peRatio}</p></div>)}
-            {stockData.dividendYield && (<div className="flex items-center"><p className="text-sm font-medium">Dividend Yield:</p><p className="text-sm ml-2">{stockData.dividendYield}</p></div>)}
-          </div>
-          <Separator />
-          {/* First Chart: Interactive Line Chart */}
-          <InteractiveLineChartComponent />
-          {/* Charts Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {lineChartData.length > 0 && ( <Card> <CardHeader><CardTitle>Price Trend (6 Months)</CardTitle><CardDescription>Showing simulated price movement.</CardDescription></CardHeader><CardContent><ChartContainer config={originalChartConfig} className="h-[200px] w-full"><LineChart data={lineChartData} margin={{ top: 5, right: 20, left: -10, bottom: 0 }}><CartesianGrid strokeDasharray="3 3" vertical={false}/><XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} /><YAxis tickLine={false} axisLine={false} tickMargin={8} /><Tooltip content={<ChartTooltipContent hideLabel indicator="line" />} /><Line dataKey="value" type="monotone" stroke="var(--color-value)" strokeWidth={2} dot={false} /></LineChart></ChartContainer></CardContent><CardFooter><div className="text-xs text-muted-foreground">Data simulated for demonstration.</div></CardFooter></Card>)}
-            <BarChartComponent />
-            {pieChartData.length > 0 && (<Card><CardHeader><CardTitle>Asset Allocation (Simulated)</CardTitle><CardDescription>Distribution across asset classes.</CardDescription></CardHeader><CardContent className="flex items-center justify-center py-4"><ChartContainer config={originalChartConfig} className="mx-auto aspect-square h-[200px]"><PieChart><ChartTooltip content={<ChartTooltipContent hideLabel nameKey="category" />} /><Pie data={pieChartData} dataKey="value" nameKey="category" innerRadius={50} outerRadius={80} strokeWidth={2}>{pieChartData.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.fill} />))}</Pie><ChartLegend content={<ChartLegendContent nameKey="category" />} /></PieChart></ChartContainer></CardContent><CardFooter><div className="text-xs text-muted-foreground">Values represent simulated portfolio.</div></CardFooter></Card>)}
-          </div>
-          {/* Analyst Rating */}
-          {stockData.analystRating && stockData.ratingValue && ( <Card><CardHeader><CardTitle className="text-lg">Analyst Rating</CardTitle></CardHeader><CardContent className="space-y-2"><div className="flex items-center justify-between"><span className="font-medium">{stockData.analystRating}</span><Badge variant={stockData.analystRating === 'Buy' ? 'default' : stockData.analystRating === 'Hold' ? 'secondary' : 'destructive'}>{stockData.analystRating}</Badge></div><Progress value={stockData.ratingValue} aria-label={`${stockData.ratingValue}% rating`} /><p className="text-xs text-muted-foreground">Based on 15 analyst reports</p></CardContent></Card>)}
+           {entry.stockData && (
+             <div className="space-y-4"> 
+               <Card>
+                 <CardContent className="p-4 space-y-4"> 
+                   <div className="flex justify-between items-center">
+                     <div>
+                       <h1 className="text-3xl font-bold">{entry.stockData.ticker}</h1>
+                       <p className="text-sm text-muted-foreground">{entry.stockData.companyName}</p>
+                     </div>
+                     <div className={`text-right`}>
+                        <p className={`text-2xl font-semibold ${entry.stockData.isUp ? 'text-green-600' : 'text-red-600'}`}>${entry.stockData.price}</p>
+                        <p className={`text-sm ${entry.stockData.isUp ? 'text-green-600' : 'text-red-600'} flex items-center justify-end`}>
+                          {entry.stockData.isUp ? <TrendingUp className="h-4 w-4 mr-1" /> : <TrendingDown className="h-4 w-4 mr-1" />}
+                          {entry.stockData.change} ({entry.stockData.changePercent}%)
+                        </p>
+                     </div>
+                   </div>
+                   
+                   <Separator /> 
+
+                   <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+                      {entry.stockData.volume && <p><span className="font-medium text-foreground">Volume:</span> {entry.stockData.volume}</p>}
+                      {entry.stockData.marketCap && <p><span className="font-medium text-foreground">Mkt Cap:</span> {entry.stockData.marketCap}</p>}
+                      <p><span className="font-medium text-foreground">Day High:</span> ${(parseFloat(entry.stockData.price) + Math.random() * 5).toFixed(2)}</p>
+                      <p><span className="font-medium text-foreground">Day Low:</span> ${(parseFloat(entry.stockData.price) - Math.random() * 5).toFixed(2)}</p>
+                      <p><span className="font-medium text-foreground">52W High:</span> ${(parseFloat(entry.stockData.price) + Math.random() * 50 + 10).toFixed(2)}</p>
+                      <p><span className="font-medium text-foreground">52W Low:</span> ${(parseFloat(entry.stockData.price) - Math.random() * 50 - 10).toFixed(2)}</p>
+                      {entry.stockData.peRatio && <p><span className="font-medium text-foreground">P/E Ratio:</span> {entry.stockData.peRatio}</p>}
+                      {entry.stockData.dividendYield && <p><span className="font-medium text-foreground">Div Yield:</span> {entry.stockData.dividendYield}</p>}
+                   </div>
+                 </CardContent>
+               </Card>
+
+               {/* Card 2: Analyst Rating (Moved Here) */}
+               {entry.stockData.analystRating && entry.stockData.ratingValue && ( 
+                 <Card>
+                   <CardHeader><CardTitle className="text-lg">Analyst Rating</CardTitle></CardHeader>
+                   <CardContent className="space-y-2">
+                     <div className="flex items-center justify-between">
+                       <span className="font-medium">{entry.stockData.analystRating}</span>
+                       <Badge variant={entry.stockData.analystRating === 'Buy' ? 'default' : entry.stockData.analystRating === 'Hold' ? 'secondary' : 'destructive'}>{entry.stockData.analystRating}</Badge>
+                     </div>
+                     <Progress value={entry.stockData.ratingValue} aria-label={`${entry.stockData.ratingValue}% rating`} />
+                     <p className="text-xs text-muted-foreground">Based on 15 analyst reports</p>
+                   </CardContent>
+                 </Card>
+               )}
+
+               <InteractiveLineChartComponent />
+               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                 {entry.lineChartData.length > 0 && ( <Card> <CardHeader><CardTitle>Price Trend (6 Months)</CardTitle><CardDescription>Showing simulated price movement.</CardDescription></CardHeader><CardContent><ChartContainer config={originalChartConfig} className="h-[200px] w-full"><LineChart data={entry.lineChartData} margin={{ top: 5, right: 20, left: -10, bottom: 0 }}><CartesianGrid strokeDasharray="3 3" vertical={false}/><XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} /><YAxis tickLine={false} axisLine={false} tickMargin={8} /><Tooltip content={<ChartTooltipContent hideLabel indicator="line" />} /><Line dataKey="value" type="monotone" stroke="var(--color-value)" strokeWidth={2} dot={false} /></LineChart></ChartContainer></CardContent><CardFooter><div className="text-xs text-muted-foreground">Data simulated for demonstration.</div></CardFooter></Card>)}
+                 <BarChartComponent /> 
+                 {entry.pieChartData.length > 0 && (<Card><CardHeader><CardTitle>Asset Allocation (Simulated)</CardTitle><CardDescription>Distribution across asset classes.</CardDescription></CardHeader><CardContent className="flex items-center justify-center py-4"><ChartContainer config={originalChartConfig} className="mx-auto aspect-square h-[200px]"><PieChart><ChartTooltip content={<ChartTooltipContent hideLabel nameKey="category" />} /><Pie data={entry.pieChartData} dataKey="value" nameKey="category" innerRadius={50} outerRadius={80} strokeWidth={2}>{entry.pieChartData.map((pieEntry, index) => (<Cell key={`cell-${index}`} fill={pieEntry.fill} />))}</Pie><ChartLegend content={<ChartLegendContent nameKey="category" />} /></PieChart></ChartContainer></CardContent><CardFooter><div className="text-xs text-muted-foreground">Values represent simulated portfolio.</div></CardFooter></Card>)}
+               </div>
+             </div>
+           )}
+
+           {entry.generalInfo && ( 
+             <div className="space-y-4"> {/* Add space-y for spacing */} 
+               {/* Original Definition Card */}
+               <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Definition</CardTitle><Info className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><p className="text-sm">{entry.generalInfo.definition}</p></CardContent></Card>
+               
+               {/* Added Placeholder Cards */}
+               <Card>
+                 <CardHeader><CardTitle className="text-lg font-medium">Placeholder Metric 1</CardTitle></CardHeader>
+                 <CardContent>
+                   <p>Value: {(Math.random() * 100).toFixed(2)}</p>
+                   <p className="text-sm text-muted-foreground">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                 </CardContent>
+               </Card>
+               <Card>
+                 <CardHeader><CardTitle className="text-lg font-medium">Placeholder Data Set 2</CardTitle></CardHeader>
+                 <CardContent className="space-y-1">
+                   <p>Row 1: Some filler text here.</p>
+                   <Separator/>
+                   <p>Row 2: Another line simulating data.</p>
+                   <Separator/>
+                   <p className="text-sm text-muted-foreground">Excepteur sint occaecat cupidatat non proident.</p>
+                 </CardContent>
+               </Card>
+                <Card>
+                 <CardHeader><CardTitle className="text-lg font-medium">Filler Section 3</CardTitle></CardHeader>
+                 <CardContent>
+                   <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam.</p>
+                 </CardContent>
+               </Card>
+             </div>
+            )}
+
+           {/* Fallback within entry if somehow no data was generated (shouldn't happen with current logic) */}
+           {!entry.myNewsData && !entry.stockData && !entry.generalInfo && ( <Card><CardHeader><CardTitle>No Results</CardTitle></CardHeader><CardContent><p>Could not fetch or generate data for &quot;{entry.query}&quot;. Please try another query.</p></CardContent></Card> )}
+        </Fragment>
+      ))}
+
+      {/* --- Loading indicator using Skeleton Card --- */}
+      {isLoadingNewSection && (
+        <div className="w-full pt-5 border-t mt-6"> {/* Removed space-y from outer div */} 
+          <Card>
+            <CardHeader>
+              {/* Mimic title in Header */}
+              <Skeleton className="h-6 w-3/4" /> 
+            </CardHeader>
+            <CardContent className="space-y-2"> {/* Add spacing for content skeletons */} 
+              {/* Mimic text lines in Content */}
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-4 w-full" />
+            </CardContent>
+             {/* Optional Footer for loading text? Or keep below. Let's keep below for now. */}
+             {/* <CardFooter> ... </CardFooter> */}
+          </Card>
+          {/* Keep loading text below the card */}
+          <p className="text-sm text-muted-foreground pt-2 text-center">Loading results for: {processingQueryRef.current ?? currentQuery}...</p>
         </div>
       )}
-
-      {/* Layout for General Term Query */}
-      {generalInfo && ( <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Definition</CardTitle><Info className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><p className="text-sm">{generalInfo.definition}</p></CardContent></Card>)}
-
-      {/* Fallback if no data type matches */}
-      {!myNewsData && !stockData && !generalInfo && ( <Card><CardHeader><CardTitle>No Results</CardTitle></CardHeader><CardContent><p>Could not fetch or generate data for &quot;{query}&quot;. Please try another query.</p></CardContent></Card> )}
-
-      {/* Placeholder Content for Scrolling Demo */}
-      {[...Array(5)].map((_, i) => (
-        <Card key={i}>
-          <CardHeader>
-            <CardTitle>Placeholder Card {i + 1}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-            <br/>
-            <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-          </CardContent>
-        </Card>
-      ))}
+      {/* --- End Loading indicator --- */}
 
     </div>
   );
