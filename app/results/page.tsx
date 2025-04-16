@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, TrendingUp, TrendingDown, Newspaper, Info, Briefcase, Activity, Lightbulb } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -377,55 +377,19 @@ interface PieChartDataPoint {
 
 // --- Main Page Component ---
 
+// Dynamically import the client component
+const ResultsDisplay = React.lazy(() => import('./ResultsDisplay'));
+
+// A simple loading component for the fallback
+function LoadingFallback() {
+  return (
+    <div className="w-full max-w-[800px] text-center py-10">
+      <p className="text-muted-foreground">Loading results...</p>
+    </div>
+  );
+}
+
 export default function ResultsPage() {
-  const searchParams = useSearchParams();
-  const rawQuery = searchParams.get('query');
-  const query = typeof rawQuery === 'string' ? decodeURIComponent(rawQuery) : 'No query specified';
-
-  // --- State for data ---
-  const [stockData, setStockData] = useState<ReturnType<typeof getStockData> | null>(null);
-  const [generalInfo, setGeneralInfo] = useState<ReturnType<typeof getGeneralInfo> | null>(null);
-  const [myNewsData, setMyNewsData] = useState<ReturnType<typeof getMyNewsData> | null>(null);
-  // State for the original chart data structures with specific types
-  const [lineChartData, setLineChartData] = useState<LineChartDataPoint[]>([]);
-  const [pieChartData, setPieChartData] = useState<PieChartDataPoint[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  // NOTE: timeRange state is removed in this reverted state
-
-  useEffect(() => {
-    setIsLoading(true);
-    const isMyNews = query === 'myNews';
-
-    // Simulate data fetching/generation
-    setMyNewsData(isMyNews ? getMyNewsData() : null);
-    const currentStockData = !isMyNews ? getStockData(query) : null;
-    setStockData(currentStockData);
-    setGeneralInfo(!isMyNews && !currentStockData ? getGeneralInfo(query) : null);
-
-    // Generate chart data only if stockData is present
-    if (currentStockData) {
-        // Original chart data generation (more realistic values)
-        setLineChartData([
-          { month: "Jan", value: 186 }, { month: "Feb", value: 205 }, { month: "Mar", value: 237 },
-          { month: "Apr", value: 225 }, { month: "May", value: 273 }, { month: "Jun", value: 301 },
-        ]);
-        setPieChartData([
-          { category: "Equities", value: 4500, fill: "var(--color-equities)" },
-          { category: "Bonds", value: 2500, fill: "var(--color-bonds)" },
-          { category: "Cash", value: 800, fill: "var(--color-cash)" },
-          { category: "Alternatives", value: 1200, fill: "var(--color-alternatives)" },
-        ]);
-    } else {
-        // Clear chart data if not applicable
-        setLineChartData([]);
-        setPieChartData([]);
-    }
-
-    setIsLoading(false);
-
-  }, [query]); // Re-run effect when query changes
-
-  // --- Render Logic ---
   return (
     <div className="relative min-h-screen">
       <main className="flex flex-col items-center p-8 pb-32 bg-muted/40">
@@ -439,260 +403,11 @@ export default function ResultsPage() {
           </Link>
         </div>
 
-        {/* Loading State */}
-        {isLoading && (
-            <div className="w-full max-w-[800px] text-center py-10">
-                <p className="text-muted-foreground">Loading results...</p>
-            </div>
-        )}
+        {/* Wrap the client component needing searchParams in Suspense */}
+        <Suspense fallback={<LoadingFallback />}>
+          <ResultsDisplay />
+        </Suspense>
 
-        {/* Content */}
-        {!isLoading && (
-            <div className="w-full max-w-[800px] space-y-6">
-                {/* Layout for "myNews" Query */}
-                {myNewsData && (
-                    <div className="space-y-6">
-                       {/* Title for this view */}
-                       <h1 className="text-2xl font-semibold mb-4">Your Daily Digest</h1>
-
-                       {/* News Card */}
-                       <Card>
-                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                           <CardTitle className="text-lg font-medium">Top News Affecting You</CardTitle>
-                           <Newspaper className="h-5 w-5 text-muted-foreground" />
-                         </CardHeader>
-                         <CardContent>
-                           <ul className="space-y-3">
-                             {myNewsData.newsItems.map(item => (
-                               <li key={item.id} className="text-sm border-b pb-2 last:border-none">
-                                 <p className="font-medium">{item.headline}</p>
-                                 <p className="text-xs text-muted-foreground">{item.source} - Impact:
-                                   <Badge variant={item.impact === 'Positive' ? 'default' : item.impact === 'Negative' ? 'destructive' : 'secondary'} className="ml-1 text-xs">
-                                     {item.impact}
-                                   </Badge>
-                                 </p>
-                               </li>
-                             ))}
-                           </ul>
-                         </CardContent>
-                       </Card>
-
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                         {/* Account Overview Card */}
-                         <Card>
-                           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                             <CardTitle className="text-lg font-medium">Account Overview</CardTitle>
-                             <Briefcase className="h-5 w-5 text-muted-foreground" />
-                           </CardHeader>
-                           <CardContent>
-                             <Table>
-                               <TableHeader>
-                                 <TableRow>
-                                   <TableHead>Account</TableHead>
-                                   <TableHead className="text-right">Balance</TableHead>
-                                   <TableHead className="text-right">Change</TableHead>
-                                 </TableRow>
-                               </TableHeader>
-                               <TableBody>
-                                 {myNewsData.accounts.map(acc => (
-                                   <TableRow key={acc.id}>
-                                     <TableCell className="font-medium">{acc.name}</TableCell>
-                                     <TableCell className="text-right">{acc.balance}</TableCell>
-                                     <TableCell className={`text-right text-xs ${acc.change.startsWith('+') ? 'text-green-600' : acc.change.startsWith('-') ? 'text-red-600' : 'text-muted-foreground'}`}>{acc.change}</TableCell>
-                                   </TableRow>
-                                 ))}
-                               </TableBody>
-                             </Table>
-                           </CardContent>
-                         </Card>
-
-                         {/* Daily Movers Card */}
-                         <Card>
-                           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                             <CardTitle className="text-lg font-medium">Daily Movers</CardTitle>
-                             <Activity className="h-5 w-5 text-muted-foreground" />
-                           </CardHeader>
-                           <CardContent>
-                              <ul className="space-y-2">
-                                {myNewsData.movers.map(mover => (
-                                  <li key={mover.id} className="flex justify-between items-center text-sm">
-                                    <span className="font-medium">{mover.ticker}</span>
-                                    <Badge variant={mover.changePercent.startsWith('+') ? 'default' : 'destructive'}>{mover.changePercent}</Badge>
-                                  </li>
-                                ))}
-                              </ul>
-                           </CardContent>
-                         </Card>
-                       </div>
-
-                        {/* Next Best Action Card */}
-                       <Card>
-                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                           <CardTitle className="text-lg font-medium">Suggested Next Steps</CardTitle>
-                           <Lightbulb className="h-5 w-5 text-muted-foreground" />
-                         </CardHeader>
-                         <CardContent>
-                           <ul className="space-y-2 text-sm">
-                             {myNewsData.nextActions.map(action => (
-                               <li key={action.id} className="flex items-center">
-                                 <Button variant="link" size="sm" className="p-0 h-auto mr-2 text-muted-foreground hover:text-primary">
-                                   {action.text}
-                                 </Button>
-                               </li>
-                             ))}
-                           </ul>
-                         </CardContent>
-                       </Card>
-                    </div>
-                )}
-
-                {/* Layout for Stock Ticker Query */}
-                {stockData && (
-                  <div className="space-y-6">
-                    {/* Stock Header */}
-                    <div className="flex items-baseline justify-between">
-                      <h1 className="text-3xl font-bold">{stockData.ticker}</h1>
-                      <div className={`text-xl font-semibold ${stockData.isUp ? 'text-green-600' : 'text-red-600'}`}>
-                        ${stockData.price}
-                        <span className="text-sm ml-2">({stockData.change} / {stockData.changePercent}%)
-                          {stockData.isUp ? <TrendingUp className="inline h-4 w-4 ml-1" /> : <TrendingDown className="inline h-4 w-4 ml-1" />}
-                        </span>
-                      </div>
-                    </div>
-                    <Separator />
-
-                    {/* Key Metrics */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      {stockData.volume && (
-                        <div className="flex items-center">
-                          <p className="text-sm font-medium">Volume:</p>
-                          <p className="text-sm ml-2">{stockData.volume}</p>
-                        </div>
-                      )}
-                      {stockData.marketCap && (
-                        <div className="flex items-center">
-                          <p className="text-sm font-medium">Market Cap:</p>
-                          <p className="text-sm ml-2">{stockData.marketCap}</p>
-                        </div>
-                      )}
-                      {stockData.peRatio && (
-                        <div className="flex items-center">
-                          <p className="text-sm font-medium">P/E Ratio:</p>
-                          <p className="text-sm ml-2">{stockData.peRatio}</p>
-                        </div>
-                      )}
-                      {stockData.dividendYield && (
-                        <div className="flex items-center">
-                          <p className="text-sm font-medium">Dividend Yield:</p>
-                          <p className="text-sm ml-2">{stockData.dividendYield}</p>
-                        </div>
-                      )}
-                    </div>
-                    <Separator />
-
-                    {/* First Chart: Interactive Line Chart (Moved to Top) */}
-                    <InteractiveLineChartComponent />
-
-                    {/* Charts Grid (Now Second) */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      {/* First Chart in Grid: Line Chart */}
-                      {lineChartData.length > 0 && (
-                        <Card>
-                          <CardHeader>
-                            <CardTitle>Price Trend (6 Months)</CardTitle>
-                            <CardDescription>Showing simulated price movement.</CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                            <ChartContainer config={originalChartConfig} className="h-[200px] w-full">
-                              <LineChart data={lineChartData} margin={{ top: 5, right: 20, left: -10, bottom: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false}/>
-                                <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
-                                <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-                                <Tooltip content={<ChartTooltipContent hideLabel indicator="line" />} />
-                                <Line dataKey="value" type="monotone" stroke="var(--color-value)" strokeWidth={2} dot={false} />
-                              </LineChart>
-                            </ChartContainer>
-                          </CardContent>
-                          <CardFooter>
-                            <div className="text-xs text-muted-foreground">Data simulated for demonstration.</div>
-                          </CardFooter>
-                        </Card>
-                      )}
-
-                      {/* Second Chart in Grid: Bar Chart */}
-                      <BarChartComponent />
-
-                      {/* Third Chart in Grid: Pie Chart */}
-                      {pieChartData.length > 0 && (
-                          <Card>
-                              <CardHeader>
-                                  <CardTitle>Asset Allocation (Simulated)</CardTitle>
-                                  <CardDescription>Distribution across asset classes.</CardDescription>
-                              </CardHeader>
-                              <CardContent className="flex items-center justify-center py-4">
-                                  <ChartContainer config={originalChartConfig} className="mx-auto aspect-square h-[200px]">
-                                      <PieChart>
-                                          <ChartTooltip content={<ChartTooltipContent hideLabel nameKey="category" />} />
-                                          <Pie data={pieChartData} dataKey="value" nameKey="category" innerRadius={50} outerRadius={80} strokeWidth={2}>
-                                              {pieChartData.map((entry, index) => (
-                                                  <Cell key={`cell-${index}`} fill={entry.fill} />
-                                              ))}
-                                          </Pie>
-                                          <ChartLegend content={<ChartLegendContent nameKey="category" />} />
-                                      </PieChart>
-                                  </ChartContainer>
-                              </CardContent>
-                              <CardFooter>
-                                <div className="text-xs text-muted-foreground">Values represent simulated portfolio.</div>
-                              </CardFooter>
-                          </Card>
-                      )}
-
-                    </div>
-
-                    {/* Analyst Rating */}
-                    {stockData.analystRating && stockData.ratingValue && (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-lg">Analyst Rating</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">{stockData.analystRating}</span>
-                            <Badge variant={stockData.analystRating === 'Buy' ? 'default' : stockData.analystRating === 'Hold' ? 'secondary' : 'destructive'}>
-                              {stockData.analystRating}
-                            </Badge>
-                          </div>
-                          <Progress value={stockData.ratingValue} aria-label={`${stockData.ratingValue}% rating`} />
-                          <p className="text-xs text-muted-foreground">Based on 15 analyst reports</p>
-                        </CardContent>
-                      </Card>
-                    )}
-
-                  </div>
-                )}
-
-                {/* Layout for General Term Query */}
-                {generalInfo && (
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Definition</CardTitle><Info className="h-5 w-5 text-muted-foreground" /></CardHeader>
-                    <CardContent><p className="text-sm">{generalInfo.definition}</p></CardContent>
-                  </Card>
-                )}
-
-                {/* Fallback if no data type matches */}
-                {!isLoading && !stockData && !generalInfo && !myNewsData && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>No Results</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p>Could not fetch or generate data for &quot;{query}&quot;. Please try another query.</p>
-                        </CardContent>
-                    </Card>
-                )}
-            </div>
-        )}
       </main>
 
       {/* Floating Input Bar */}
