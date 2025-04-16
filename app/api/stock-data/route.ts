@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // Define interfaces for expected data structures (optional but good practice)
-interface PriceData { /* ... structure for price ... */ }
-interface QuoteData { /* ... structure for quote ... */ }
-interface TimeSeriesData { /* ... structure for time series ... */ }
-interface ProfileData { /* ... structure for profile ... */ }
-interface EarningsData { /* ... structure for earnings ... */ }
+// Use Record<string, unknown> for now to allow any object structure
+type PriceData = Record<string, unknown>;
+type QuoteData = Record<string, unknown>;
+type TimeSeriesData = Record<string, unknown>;
+type ProfileData = Record<string, unknown>;
+type EarningsData = Record<string, unknown>;
 
 interface CombinedData {
   price: PriceData | null;
