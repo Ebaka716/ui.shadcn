@@ -12,7 +12,7 @@ const ResultsDisplay = React.lazy(() => import('./ResultsDisplay'));
 // Keep LoadingFallback
 function LoadingFallback() {
   return (
-    <div className="w-full max-w-[800px] text-center py-10">
+    <div className="w-full max-w-[800px] text-center py-10 bg-[#F9F7F5]">
       <p className="text-muted-foreground">Loading results...</p>
     </div>
   );
@@ -21,7 +21,7 @@ function LoadingFallback() {
 export default function ResultsPage() {
   return (
     <div className="relative min-h-screen">
-      <main className="flex flex-col items-center p-8 pb-32 bg-muted/40">
+      <main className="flex flex-col items-center p-8 pb-32 bg-[#F9F7F5]">
         {/* Back Button */}
         <div className="w-full max-w-[800px] mb-8 self-start">
           <Link href="/" passHref>

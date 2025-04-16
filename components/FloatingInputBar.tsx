@@ -32,7 +32,7 @@ export function FloatingInputBar() {
         onSubmit={handleFormSubmit}
         className="max-w-[800px] mx-auto pointer-events-auto"
       >
-        <div className="rounded-lg border shadow-md relative flex items-center bg-background h-14 flex-grow overflow-hidden gap-2 px-3">
+        <div className="rounded-lg border shadow-md relative flex items-center bg-white h-14 flex-grow overflow-hidden gap-2 px-3">
           <Button variant="ghost" size="icon" className="flex-shrink-0">
             <Paperclip className="h-4 w-4" />
             <span className="sr-only">Attach file</span>
