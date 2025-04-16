@@ -364,6 +364,13 @@ export default function ResultsDisplay() {
                         <div>
                           <h1 className="text-3xl font-bold">{entry.stockData.ticker}</h1>
                           <p className="text-sm text-muted-foreground">{entry.stockData.companyName}</p>
+                          {/* MOVED Analyst Rating Right Under Company Name */}
+                          {entry.stockData.analystRating && (
+                             <p className="flex items-center text-xs mt-1"> {/* Adjusted size and margin */} 
+                              <span className="font-medium text-foreground mr-1">Analyst Rating:</span> 
+                              <Badge variant={entry.stockData.analystRating === 'Buy' ? 'default' : entry.stockData.analystRating === 'Hold' ? 'secondary' : 'destructive'} className="text-xs">{entry.stockData.analystRating}</Badge>
+                             </p>
+                          )}
                         </div>
                         <div className={`text-right`}>
                            <p className={`text-2xl font-semibold ${entry.stockData.isUp ? 'text-green-600' : 'text-red-600'}`}>${entry.stockData.price}</p>
@@ -388,21 +395,6 @@ export default function ResultsDisplay() {
                       </div>
                     </CardContent>
                   </Card>
-
-                  {/* Card 2: Analyst Rating (Moved Here) */} 
-                  {entry.stockData.analystRating && entry.stockData.ratingValue && ( 
-                    <Card className="shadow-none">
-                      <CardHeader><CardTitle className="text-lg">Analyst Rating</CardTitle></CardHeader>
-                      <CardContent className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">{entry.stockData.analystRating}</span>
-                          <Badge variant={entry.stockData.analystRating === 'Buy' ? 'default' : entry.stockData.analystRating === 'Hold' ? 'secondary' : 'destructive'}>{entry.stockData.analystRating}</Badge>
-                        </div>
-                        <Progress value={entry.stockData.ratingValue} aria-label={`${entry.stockData.ratingValue}% rating`} />
-                        <p className="text-xs text-muted-foreground">Based on 15 analyst reports</p>
-                      </CardContent>
-                    </Card>
-                  )}
 
                   <InteractiveLineChartComponent />
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
