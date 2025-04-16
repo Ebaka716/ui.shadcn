@@ -20,7 +20,7 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 // Import Chart Components
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, type ChartConfig } from "@/components/ui/chart";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, AreaChart, Area, PieChart, Pie, Cell, Bar, BarChart } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, Bar, BarChart } from 'recharts';
 // NOTE: Select components are NOT imported in this reverted state
 
 // --- Helper functions for simulated data ---
@@ -363,6 +363,18 @@ function InteractiveLineChartComponent() {
   );
 }
 
+// --- Type definitions for chart data ---
+interface LineChartDataPoint {
+  month: string;
+  value: number;
+}
+
+interface PieChartDataPoint {
+  category: string;
+  value: number;
+  fill: string;
+}
+
 // --- Main Page Component ---
 
 export default function ResultsPage() {
@@ -374,9 +386,9 @@ export default function ResultsPage() {
   const [stockData, setStockData] = useState<ReturnType<typeof getStockData> | null>(null);
   const [generalInfo, setGeneralInfo] = useState<ReturnType<typeof getGeneralInfo> | null>(null);
   const [myNewsData, setMyNewsData] = useState<ReturnType<typeof getMyNewsData> | null>(null);
-  // State for the original chart data structures
-  const [lineChartData, setLineChartData] = useState<any[]>([]);
-  const [pieChartData, setPieChartData] = useState<any[]>([]);
+  // State for the original chart data structures with specific types
+  const [lineChartData, setLineChartData] = useState<LineChartDataPoint[]>([]);
+  const [pieChartData, setPieChartData] = useState<PieChartDataPoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   // NOTE: timeRange state is removed in this reverted state
 
@@ -675,7 +687,7 @@ export default function ResultsPage() {
                             <CardTitle>No Results</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p>Could not fetch or generate data for "{query}". Please try another query.</p>
+                            <p>Could not fetch or generate data for &quot;{query}&quot;. Please try another query.</p>
                         </CardContent>
                     </Card>
                 )}
