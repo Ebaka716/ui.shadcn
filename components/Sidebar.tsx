@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { PanelLeftClose, PanelRightClose, Plus, X } from 'lucide-react'; // Icons for toggling
+import { PanelLeftClose, PanelRightClose, Plus, X, Gauge } from 'lucide-react'; // Icons for toggling
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -55,26 +55,42 @@ export function Sidebar({
         {/* Top Section: Close/Toggle Buttons */}
         <div className="p-2 flex justify-end">
           {/* Mobile Close Button (Top right inside drawer) */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden" // Only show on mobile
-            onClick={closeMobileMenu}
-          >
-            <X className="h-5 w-5" />
-            <span className="sr-only">Close Menu</span>
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden" // Only show on mobile
+                onClick={closeMobileMenu}
+              >
+                <X className="h-5 w-5" />
+                <span className="sr-only">Close Menu</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="bg-black text-white px-3 py-1.5 text-xs rounded-md">
+              <p>Close Menu</p>
+            </TooltipContent>
+          </Tooltip>
 
           {/* Desktop Toggle Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="hidden md:block" // Only show on desktop
-            onClick={toggleDesktopSidebar}
-          >
-            {isDesktopCollapsed ? <PanelRightClose className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
-             <span className="sr-only">Toggle Sidebar</span>
-          </Button>
+          <Tooltip>
+            {/* No need to disable this tooltip trigger */}
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hidden md:block" // Only show on desktop
+                onClick={toggleDesktopSidebar}
+              >
+                {isDesktopCollapsed ? <PanelRightClose className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
+                 <span className="sr-only">Toggle Sidebar</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="bg-black text-white px-3 py-1.5 text-xs rounded-md">
+              {/* Conditional tooltip text */}
+              <p>{isDesktopCollapsed ? "Expand Menu" : "Collapse Menu"}</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
 
         {/* Main Content Area (Navigation Items) */}
@@ -83,10 +99,9 @@ export function Sidebar({
           {/* New Search Item with Tooltip (Conditional) */}
           <Tooltip>
             <TooltipTrigger asChild disabled={tooltipsDisabled}>
-              <Link href="/" passHref className="block"> {/* Simplified Link */} 
+              <Link href="/" passHref className="block"> 
                 <Button variant="ghost" className={cn("w-full justify-start", isDesktopCollapsed && "md:justify-center")}>
-                  <Plus className="h-5 w-5 md:mr-2" /> {/* Keep mr-2 on desktop only */} 
-                  {/* Text only visible when expanded (desktop) or on mobile (always expanded view) */}
+                  <Plus className="h-5 w-5 md:mr-2" />
                   <span className={cn(isDesktopCollapsed && "md:hidden")}>New Search</span> 
                 </Button>
               </Link>
@@ -99,8 +114,24 @@ export function Sidebar({
           {/* Add more items here */}
         </div>
 
-        {/* Footer Item (Settings) with Tooltip (Conditional) */}
+        {/* Footer Items */}
         <div className="p-2 mt-auto border-t">
+          {/* Confidence Demo Item (Moved here) */}
+          <Tooltip>
+            <TooltipTrigger asChild disabled={tooltipsDisabled}>
+              <Link href="/confidence-demo" passHref className="block">
+                <Button variant="ghost" className={cn("w-full justify-start", isDesktopCollapsed && "md:justify-center")}>
+                  <Gauge className="h-5 w-5 md:mr-2" />
+                  <span className={cn(isDesktopCollapsed && "md:hidden")}>Confidence Demo</span>
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="bg-black text-white px-3 py-1.5 text-xs rounded-md">
+              <p>Confidence Demo</p>
+            </TooltipContent>
+          </Tooltip>
+
+          {/* Settings Item (Original Position) */}
           <Tooltip>
             <TooltipTrigger asChild disabled={tooltipsDisabled}>
               <Button variant="ghost" className={cn("w-full justify-start", isDesktopCollapsed && "md:justify-center")}>
