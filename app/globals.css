@@ -41,6 +41,14 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  
+  --color-value: var(--chart-1);
+  --color-desktop: var(--chart-1);
+  --color-mobile: var(--chart-2);
+  --color-equities: var(--chart-1);
+  --color-bonds: var(--chart-2);
+  --color-cash: var(--chart-3);
+  --color-alternatives: var(--chart-4);
 }
 
 :root {

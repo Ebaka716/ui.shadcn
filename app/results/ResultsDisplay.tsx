@@ -122,7 +122,7 @@ function BarChartComponent() {
             <CartesianGrid vertical={false} />
             <XAxis dataKey="month" tickLine={false} tickMargin={10} axisLine={false} tickFormatter={(value) => value.slice(0, 3)} />
             <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-            <Bar dataKey="desktop" fill="var(--color-desktop)" radius={8} />
+            <Bar dataKey="desktop" radius={8} />
           </BarChart>
         </ChartContainer>
       </CardContent>
@@ -173,7 +173,7 @@ function InteractiveLineChartComponent() {
             <CartesianGrid vertical={false} />
             <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} minTickGap={32} tickFormatter={(value) => new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric" })} />
             <ChartTooltip content={<ChartTooltipContent className="w-[150px]" nameKey="views" labelFormatter={(value) => new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} />} />
-            <Line dataKey={activeChart} type="monotone" stroke="black" strokeWidth={2} dot={false} />
+            <Line dataKey={activeChart} type="monotone" stroke={`var(--color-${activeChart})`} strokeWidth={2} dot={false} />
           </LineChart>
         </ChartContainer>
       </CardContent>
@@ -284,10 +284,15 @@ export default function ResultsDisplay() {
   // Re-introduce effect for scrolling on isLoadingNewSection
   useEffect(() => {
     if (isLoadingNewSection) {
-      window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: 'smooth'
-      });
+      // Find the main scrolling container by ID
+      const scrollContainer = document.getElementById('main-scroll-area');
+      if (scrollContainer) {
+        // Scroll the container to its bottom
+        scrollContainer.scrollTo({
+          top: scrollContainer.scrollHeight,
+          behavior: 'smooth'
+        });
+      }
     }
   }, [isLoadingNewSection]);
 
@@ -313,7 +318,7 @@ export default function ResultsDisplay() {
   // REMOVED: renderError function 
 
   return (
-    <div ref={historyContainerRef} className="w-full max-w-[800px] space-y-6">
+    <div ref={historyContainerRef} className="w-full space-y-6">
       
       {/* Revert Map logic: Render all entries directly */}
       {resultsHistory.map((entry, index) => (
@@ -358,7 +363,7 @@ export default function ResultsDisplay() {
               <div className="space-y-4"> 
                  {/* ... stockData cards ... */}
                   <Card className="shadow-none">
-                    <CardContent className="p-4 space-y-4"> 
+                    <CardContent className="py-4 px-3 space-y-4"> 
                       <div className="flex justify-between items-center">
                         <div>
                           <h1 className="text-3xl font-bold">{entry.stockData.ticker}</h1>
