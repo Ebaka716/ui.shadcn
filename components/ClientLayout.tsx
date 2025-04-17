@@ -5,7 +5,6 @@ import { Sidebar } from '@/components/Sidebar';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Button } from '@/components/ui/button';
 import { Header } from '@/components/Header';
 import { FloatingInputBar } from '@/components/FloatingInputBar';
 

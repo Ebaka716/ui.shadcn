@@ -1,10 +1,10 @@
 "use client";
 
-import Link from 'next/link';
+// Removed unused imports: Link, Button, ArrowLeft, FloatingInputBar
 import React, { Suspense } from 'react';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
-import { FloatingInputBar } from '@/components/FloatingInputBar';
+// import { Button } from '@/components/ui/button';
+// import { ArrowLeft } from 'lucide-react';
+// import { FloatingInputBar } from '@/components/FloatingInputBar';
 
 // Keep dynamic import for ResultsDisplay
 const ResultsDisplay = React.lazy(() => import('./ResultsDisplay'));

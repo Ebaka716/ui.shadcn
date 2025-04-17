@@ -1,12 +1,9 @@
 "use client";
 
 import React from "react";
-import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
 
 export default function AdvisorPage() {
   const [date, setDate] = React.useState<Date | undefined>(new Date());
