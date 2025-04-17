@@ -154,7 +154,8 @@ export default function Home() {
         <button type="submit" hidden />
       </form>
 
-      <div className="flex space-x-4">
+      {/* Container for wrapping icebreaker buttons, aligned with command bar */}
+      <div className="flex flex-wrap gap-2 justify-center w-full max-w-xl">
         <Button 
           variant="outline"
           onClick={() => navigateToResults('How\'s AAPL doing?')}
@@ -163,15 +164,27 @@ export default function Home() {
         </Button>
         <Button 
           variant="outline"
-          onClick={() => navigateToResults('What news has affected me today?')}
-        >
-          What news has affected me today?
-        </Button>
-        <Button 
-          variant="outline"
           onClick={() => router.push('/advisor')}
         >
           Check in with an Advisor
+        </Button>
+        <Button 
+          variant="outline"
+          onClick={() => navigateToResults('Market Overview')}
+        >
+          Market Overview
+        </Button>
+        <Button 
+          variant="outline"
+          onClick={() => navigateToResults('Explain P/E Ratio')}
+        >
+          Explain P/E Ratio
+        </Button>
+        <Button 
+          variant="outline"
+          onClick={() => navigateToResults('What news has affected me today?')}
+        >
+          What news has affected me today?
         </Button>
       </div>
     </main>

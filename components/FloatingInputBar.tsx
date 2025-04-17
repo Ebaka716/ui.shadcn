@@ -20,7 +20,13 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-export function FloatingInputBar() {
+// Remove Prop Interface again
+// interface FloatingInputBarProps {
+//   isDesktopCollapsed: boolean;
+// }
+
+// Remove prop from function signature again
+export function FloatingInputBar(/* { isDesktopCollapsed } */) {
   const router = useRouter();
   const [inputValue, setInputValue] = useState("");
   const [focusMode, setFocusMode] = useState("Learning Center");
@@ -33,9 +39,11 @@ export function FloatingInputBar() {
   };
 
   return (
+    // Change back to sticky positioning, remove fixed layout classes, add top margin
     <div className={cn(
-      "sticky bottom-0 mt-6 z-10"
+      "sticky bottom-0 mt-6 z-10" // Revert to sticky
     )}>
+      {/* Inner centering div remains */}
       <div className="max-w-[800px] mx-auto pointer-events-auto">
         <form
           onSubmit={handleFormSubmit}

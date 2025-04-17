@@ -185,17 +185,17 @@ function InteractiveLineChartComponent() {
 // --- Type definitions ---
 interface LineChartDataPoint { month: string; value: number; }
 interface PieChartDataPoint { category: string; value: number; fill: string; }
+// Define General Info type explicitly for clarity
+type GeneralInfoData = ReturnType<typeof getGeneralInfo>;
 
 // Define the structure for each history entry
 interface ResultEntry {
-  id: string; // Unique key
+  id: string; 
   query: string;
   stockData: ReturnType<typeof getStockData> | null;
-  generalInfo: ReturnType<typeof getGeneralInfo> | null;
+  generalInfo: GeneralInfoData | null; // For non-stock, non-news, non-definition
   myNewsData: ReturnType<typeof getMyNewsData> | null;
-  // isLoading: boolean; // Removed per-entry loading state
-  // error: string | null; // Removed per-entry error state
-  // Include chart data specific to this entry if generated dynamically
+  definitionData: GeneralInfoData | null; // <-- ADDED for definitions (reusing structure)
   lineChartData: LineChartDataPoint[];
   pieChartData: PieChartDataPoint[];
 }
@@ -206,98 +206,128 @@ export default function ResultsDisplay() {
   const currentQuery = searchParams.get('query') || 'No query specified';
 
   const [resultsHistory, setResultsHistory] = useState<ResultEntry[]>([]);
-  // Re-introduce isLoadingNewSection state
   const [isLoadingNewSection, setIsLoadingNewSection] = useState<boolean>(false);
   
   const processingQueryRef = useRef<string | null>(null);
   const historyContainerRef = useRef<HTMLDivElement>(null);
   const prevHistoryLengthRef = useRef<number>(0);
-  const loaderRef = useRef<HTMLDivElement>(null); // <-- Add ref for loader
+  const loaderRef = useRef<HTMLDivElement>(null);
 
-  // Effect to process new queries (with delay)
+  // Effect to process new queries
   useEffect(() => {
-    // Revert Check 1
     if (currentQuery === resultsHistory[resultsHistory.length - 1]?.query) {
       processingQueryRef.current = currentQuery; 
       return; 
     }
-    
-    // Revert Check 2 
     if (currentQuery === processingQueryRef.current) {
         return;
     }
 
-    // Revert startProcessingWithDelay logic
+    // --- Process Query --- 
     const startProcessingWithDelay = () => {
       processingQueryRef.current = currentQuery;
       setIsLoadingNewSection(true);
       const queryToProcess = currentQuery; 
-
-      // --- Determine Data Key --- 
-      let dataQueryKey = queryToProcess; // Default to original query
       const lowerQuery = queryToProcess.toLowerCase();
-      if (lowerQuery.includes('apple') || lowerQuery.includes('aapl')) {
+
+      // --- Determine Query Type and Data Key --- 
+      let queryType: 'definition' | 'stock' | 'news' | 'general' = 'general';
+      let dataQueryKey = queryToProcess; 
+      let termForDefinition = '';
+
+      const definitionPrefixes = ['explain ', 'define ', 'what is ', 'what are '];
+      const definitionMatch = definitionPrefixes.find(prefix => lowerQuery.startsWith(prefix));
+
+      if (definitionMatch) {
+        queryType = 'definition';
+        termForDefinition = queryToProcess.substring(definitionMatch.length).trim();
+        // Use the extracted term for potential general info lookup if needed
+        dataQueryKey = termForDefinition; 
+      } else if (lowerQuery.includes('news')) {
+        queryType = 'news';
+        dataQueryKey = 'myNews'; // Specific key for news function
+      } else if (lowerQuery.includes('apple') || lowerQuery.includes('aapl')) {
+        queryType = 'stock';
         dataQueryKey = 'AAPL';
       } else if (lowerQuery.includes('google') || lowerQuery.includes('googl')) {
+        queryType = 'stock';
         dataQueryKey = 'GOOGL';
       } else if (lowerQuery.includes('microsoft') || lowerQuery.includes('msft')) {
+        queryType = 'stock';
         dataQueryKey = 'MSFT';
-      } else if (lowerQuery.includes('news')) {
-        dataQueryKey = 'myNews';
+      } else {
+        // Check if it *looks* like a ticker even if not explicitly mapped
+        const isTickerLike = /^[A-Z]{1,5}$/.test(queryToProcess);
+        if (isTickerLike) {
+          queryType = 'stock'; 
+          dataQueryKey = queryToProcess; // Try the query directly as a ticker
+        }
+        // Otherwise, it remains 'general' with dataQueryKey = queryToProcess
       }
-      // Add more mappings as needed...
-      // --- End Determine Data Key ---
+      // --- End Determine Query Type ---
 
-      // Revert timeout logic: create final entry object inside timeout
-      // Pass original query explicitly to the timeout callback
       const timerId = setTimeout(async (originalQueryForTitle) => {
-        // Use dataQueryKey for data fetching logic
-        const isMyNews = dataQueryKey === 'myNews';
-        const newStockData = !isMyNews ? getStockData(dataQueryKey) : null;
-        const newGeneralInfo = !isMyNews && !newStockData ? getGeneralInfo(dataQueryKey) : null;
-        const newMyNewsData = isMyNews ? getMyNewsData() : null;
+        // --- Fetch Data based on Type ---
+        let newStockData: ReturnType<typeof getStockData> | null = null;
+        let newGeneralInfo: GeneralInfoData | null = null;
+        let newMyNewsData: ReturnType<typeof getMyNewsData> | null = null;
+        let newDefinitionData: GeneralInfoData | null = null;
 
+        if (queryType === 'definition') {
+          // Use getGeneralInfo to simulate getting definition data
+          newDefinitionData = getGeneralInfo(termForDefinition || dataQueryKey);
+        } else if (queryType === 'news') {
+          newMyNewsData = getMyNewsData();
+        } else if (queryType === 'stock') {
+          newStockData = getStockData(dataQueryKey);
+          // If stock lookup fails, maybe fall back to general info?
+          if (!newStockData) {
+            newGeneralInfo = getGeneralInfo(dataQueryKey); 
+          }
+        } else { // queryType === 'general'
+          newGeneralInfo = getGeneralInfo(dataQueryKey);
+        }
+        // --- End Fetch Data ---
+        
+        // --- Chart Data (Only for Stock) ---
         let newLineChartData: LineChartDataPoint[] = [];
         let newPieChartData: PieChartDataPoint[] = [];
-        if (newStockData) {
+        if (newStockData) { // Only generate charts if we have stock data
           newLineChartData = [
-            { month: "Jan", value: 186 }, { month: "Feb", value: 205 }, { month: "Mar", value: 237 },
-            { month: "Apr", value: 225 }, { month: "May", value: 273 }, { month: "Jun", value: 301 },
+             { month: "Jan", value: 186 }, { month: "Feb", value: 205 }, { month: "Mar", value: 237 },
+             { month: "Apr", value: 225 }, { month: "May", value: 273 }, { month: "Jun", value: 301 },
           ];
           newPieChartData = [
-            { category: "Equities", value: 4500, fill: "var(--color-equities)" },
-            { category: "Bonds", value: 2500, fill: "var(--color-bonds)" },
-            { category: "Cash", value: 800, fill: "var(--color-cash)" },
-            { category: "Alternatives", value: 1200, fill: "var(--color-alternatives)" },
+             { category: "Equities", value: 4500, fill: "var(--color-equities)" },
+             { category: "Bonds", value: 2500, fill: "var(--color-bonds)" },
+             { category: "Cash", value: 800, fill: "var(--color-cash)" },
+             { category: "Alternatives", value: 1200, fill: "var(--color-alternatives)" },
           ];
         }
-        // --- End chart data generation ---
+        // --- End Chart Data ---
 
-        // Create the final entry directly - Use the passed original query for display
         const newEntry: ResultEntry = {
           id: uuidv4(),
-          query: originalQueryForTitle, // <-- Use the explicitly passed original query
+          query: originalQueryForTitle, 
           stockData: newStockData,
           generalInfo: newGeneralInfo,
           myNewsData: newMyNewsData,
+          definitionData: newDefinitionData, // <-- Include definition data
           lineChartData: newLineChartData,
           pieChartData: newPieChartData,
-          // No isLoading/error here
         };
 
-        // Add the final entry and stop loading indicator
         setResultsHistory(prev => [...prev, newEntry]);
         setIsLoadingNewSection(false);
         processingQueryRef.current = null; 
 
-      }, 2000, queryToProcess); // <-- Pass queryToProcess as argument here
+      }, 2000, queryToProcess);
 
       return () => clearTimeout(timerId);
     };
 
     startProcessingWithDelay();
 
-  // Revert dependency array
   }, [currentQuery, resultsHistory]); 
 
   // Re-introduce effect for scrolling, but target the loader
@@ -305,7 +335,7 @@ export default function ResultsDisplay() {
     if (isLoadingNewSection && loaderRef.current) {
       loaderRef.current.scrollIntoView({
         behavior: 'smooth',
-        block: 'center' // Try centering the loader
+        block: 'center' 
       });
     }
   }, [isLoadingNewSection]);
@@ -320,7 +350,7 @@ export default function ResultsDisplay() {
             if (targetElement) {
               targetElement.scrollIntoView({ 
                   behavior: "smooth",
-                  block: "start" // <-- Change back to start
+                  block: "start" 
               });
             }
         }
@@ -334,142 +364,201 @@ export default function ResultsDisplay() {
   return (
     <div ref={historyContainerRef} className="w-full space-y-6">
       
-      {/* Revert Map logic: Render all entries directly */}
       {resultsHistory.map((entry, index) => (
         <Fragment key={entry.id}>
-            {/* Render actual content directly - Only display query in heading */}
-            <h2 id={`title-${entry.id}`} className="text-xl font-semibold pt-4 border-t mt-6">{entry.query}</h2>
+            <h2 id={`title-${entry.id}`} className="text-xl font-semibold pt-4 mt-6">{entry.query}</h2>
+            
+            {/* Definition Section */}
+            {entry.definitionData && (
+              <div className="space-y-6">
+                 <Card className="shadow-none">
+                   <CardHeader>
+                     <CardTitle>Definition</CardTitle>
+                   </CardHeader>
+                   <CardContent>
+                     <div className="text-base space-y-4">
+                       <p>{entry.definitionData.definition}</p>
+                       <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+                       <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                     </div>
+                   </CardContent>
+                 </Card>
+                 {/* Add placeholder action cards (could be dynamic later) */}
+                 <Card className="shadow-none">
+                   <CardHeader><CardTitle>Analyze Stocks by P/E</CardTitle></CardHeader>
+                   <CardContent><Button variant="outline" size="sm">Go to Screener</Button></CardContent>
+                 </Card>
+                 <Card className="shadow-none">
+                   <CardHeader><CardTitle>Compare Industry Ratios</CardTitle></CardHeader>
+                   <CardContent><Button variant="outline" size="sm">View Comparison</Button></CardContent>
+                 </Card>
+                 {/* Added More Placeholder Action Cards */}
+                  <Card className="shadow-none">
+                   <CardHeader><CardTitle>Related Concepts</CardTitle></CardHeader>
+                   <CardContent className="space-y-2">
+                     <Button variant="link" className="p-0 h-auto text-sm">Price-to-Book (P/B) Ratio</Button><br/>
+                     <Button variant="link" className="p-0 h-auto text-sm">Dividend Yield</Button>
+                    </CardContent>
+                 </Card>
+                 <Card className="shadow-none">
+                   <CardHeader><CardTitle>Historical Trend</CardTitle></CardHeader>
+                   <CardContent><p className="text-sm text-muted-foreground">View the historical trend of this metric for relevant entities.</p><Button variant="outline" size="sm" className="mt-2">View Trend</Button></CardContent>
+                 </Card>
+               </div>
+            )}
+
+            {/* News Section */}
             {entry.myNewsData && (
               <div className="space-y-6">
-                 {/* ... myNewsData cards ... */}
-                  {/* News Card */}
-                  <Card className="shadow-none">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Top News Affecting You</CardTitle><Newspaper className="h-5 w-5 text-muted-foreground" /></CardHeader>
-                    <CardContent><ul className="space-y-3">{entry.myNewsData.newsItems.map(item => (
-                      <li key={item.id} className="text-sm border-b pb-3 last:border-none flex justify-between items-start gap-4">
-                        <div className="flex-grow">
-                          <p className="font-medium">{item.headline}</p>
-                          <p className="text-xs text-muted-foreground">{item.source}</p>
-                        </div>
-                        <Badge variant={item.impact === 'Positive' ? 'default' : item.impact === 'Negative' ? 'destructive' : 'outline'} className="ml-1 text-xs flex-shrink-0 mt-0.5">{item.impact}</Badge>
-                      </li>
-                    ))}</ul></CardContent>
-                  </Card>
-                  {/* Account/Movers Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card className="shadow-none">
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Account Overview</CardTitle><Briefcase className="h-5 w-5 text-muted-foreground" /></CardHeader>
-                      <CardContent><Table><TableHeader><TableRow><TableHead>Account</TableHead><TableHead className="text-right">Balance</TableHead><TableHead className="text-right">Change</TableHead></TableRow></TableHeader><TableBody>{entry.myNewsData.accounts.map(acc => (<TableRow key={acc.id}><TableCell className="font-medium">{acc.name}</TableCell><TableCell className="text-right">{acc.balance}</TableCell><TableCell className={`text-right text-xs ${acc.change.startsWith('+') ? 'text-green-600' : acc.change.startsWith('-') ? 'text-red-600' : 'text-muted-foreground'}`}>{acc.change}</TableCell></TableRow>))}</TableBody></Table></CardContent>
-                    </Card>
-                    <Card className="shadow-none">
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Daily Movers</CardTitle><Activity className="h-5 w-5 text-muted-foreground" /></CardHeader>
-                      <CardContent><ul className="space-y-2">{entry.myNewsData.movers.map(mover => (<li key={mover.id} className="flex justify-between items-center text-sm"><span className="font-medium">{mover.ticker}</span><Badge variant={mover.changePercent.startsWith('+') ? 'default' : 'destructive'}>{mover.changePercent}</Badge></li>))}</ul></CardContent>
-                    </Card>
-                  </div>
-                  {/* Next Actions */}
-                  <Card className="shadow-none">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Suggested Next Steps</CardTitle><Lightbulb className="h-5 w-5 text-muted-foreground" /></CardHeader>
-                    <CardContent><ul className="space-y-2 text-sm">{entry.myNewsData.nextActions.map(action => (<li key={action.id} className="flex items-center"><Button variant="link" size="sm" className="p-0 h-auto mr-2 text-muted-foreground hover:text-primary">{action.text}</Button></li>))}</ul></CardContent>
-                  </Card>
-              </div>
-            )}
-            {entry.stockData && (
-              <div className="space-y-4"> 
-                 {/* ... stockData cards ... */}
-                  <Card className="shadow-none">
-                    <CardContent className="py-4 px-3 space-y-4"> 
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h1 className="text-3xl font-bold">{entry.stockData.ticker}</h1>
-                          <p className="text-sm text-muted-foreground">{entry.stockData.companyName}</p>
-                          {/* MOVED Analyst Rating Right Under Company Name */}
-                          {entry.stockData.analystRating && (
-                             <p className="flex items-center text-xs mt-1"> {/* Adjusted size and margin */} 
-                              <span className="font-medium text-foreground mr-1">Analyst Rating:</span> 
-                              <Badge variant={entry.stockData.analystRating === 'Buy' ? 'default' : entry.stockData.analystRating === 'Hold' ? 'secondary' : 'destructive'} className="text-xs">{entry.stockData.analystRating}</Badge>
-                             </p>
-                          )}
-                        </div>
-                        <div className={`text-right`}>
-                           <p className={`text-2xl font-semibold ${entry.stockData.isUp ? 'text-green-600' : 'text-red-600'}`}>${entry.stockData.price}</p>
-                           <p className={`text-sm ${entry.stockData.isUp ? 'text-green-600' : 'text-red-600'} flex items-center justify-end`}>
-                             {entry.stockData.isUp ? <TrendingUp className="h-4 w-4 mr-1" /> : <TrendingDown className="h-4 w-4 mr-1" />}
-                             {entry.stockData.change} ({entry.stockData.changePercent}%)
-                           </p>
-                        </div>
-                      </div>
-                      
-                      <Separator /> 
-
-                      <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-                         {entry.stockData.volume && <p><span className="font-medium text-foreground">Volume:</span> {entry.stockData.volume}</p>}
-                         {entry.stockData.marketCap && <p><span className="font-medium text-foreground">Mkt Cap:</span> {entry.stockData.marketCap}</p>}
-                         <p><span className="font-medium text-foreground">Day High:</span> ${(parseFloat(entry.stockData.price) + Math.random() * 5).toFixed(2)}</p>
-                         <p><span className="font-medium text-foreground">Day Low:</span> ${(parseFloat(entry.stockData.price) - Math.random() * 5).toFixed(2)}</p>
-                         <p><span className="font-medium text-foreground">52W High:</span> ${(parseFloat(entry.stockData.price) + Math.random() * 50 + 10).toFixed(2)}</p>
-                         <p><span className="font-medium text-foreground">52W Low:</span> ${(parseFloat(entry.stockData.price) - Math.random() * 50 - 10).toFixed(2)}</p>
-                         {entry.stockData.peRatio && <p><span className="font-medium text-foreground">P/E Ratio:</span> {entry.stockData.peRatio}</p>}
-                         {entry.stockData.dividendYield && <p><span className="font-medium text-foreground">Div Yield:</span> {entry.stockData.dividendYield}</p>}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <InteractiveLineChartComponent />
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {entry.lineChartData.length > 0 && ( <Card className="shadow-none"> <CardHeader><CardTitle>Price Trend (6 Months)</CardTitle><CardDescription>Showing simulated price movement.</CardDescription></CardHeader><CardContent><ChartContainer config={originalChartConfig} className="h-[200px] w-full"><LineChart data={entry.lineChartData} margin={{ top: 5, right: 20, left: -10, bottom: 0 }}><CartesianGrid strokeDasharray="3 3" vertical={false}/><XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} /><YAxis tickLine={false} axisLine={false} tickMargin={8} /><Tooltip content={<ChartTooltipContent hideLabel indicator="line" />} /><Line dataKey="value" type="monotone" stroke="var(--color-value)" strokeWidth={2} dot={false} /></LineChart></ChartContainer></CardContent><CardFooter><div className="text-xs text-muted-foreground">Data simulated for demonstration.</div></CardFooter></Card>)}
-                    <BarChartComponent /> 
-                    {entry.pieChartData.length > 0 && (<Card className="shadow-none"><CardHeader><CardTitle>Asset Allocation (Simulated)</CardTitle><CardDescription>Distribution across asset classes.</CardDescription></CardHeader><CardContent className="flex items-center justify-center py-4"><ChartContainer config={originalChartConfig} className="mx-auto aspect-square h-[200px]"><PieChart><ChartTooltip content={<ChartTooltipContent hideLabel nameKey="category" />} /><Pie data={entry.pieChartData} dataKey="value" nameKey="category" innerRadius={50} outerRadius={80} strokeWidth={2}>{entry.pieChartData.map((pieEntry, index) => (<Cell key={`cell-${index}`} fill={pieEntry.fill} />))}</Pie><ChartLegend content={<ChartLegendContent nameKey="category" />} /></PieChart></ChartContainer></CardContent><CardFooter><div className="text-xs text-muted-foreground">Values represent simulated portfolio.</div></CardFooter></Card>)}
-                  </div>
-              </div>
-            )}
-            {entry.generalInfo && ( 
-              <div className="space-y-4"> {/* Add space-y for spacing */} 
-                 {/* ... generalInfo cards ... */}
-                  {/* Original Definition Card */} 
-                  <Card className="shadow-none"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Definition</CardTitle><Info className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><p className="text-sm">{entry.generalInfo.definition}</p></CardContent></Card>
-                  
-                  {/* Added Placeholder Cards */} 
-                  <Card className="shadow-none">
-                    <CardHeader><CardTitle className="text-lg font-medium">Placeholder Metric 1</CardTitle></CardHeader>
-                    <CardContent>
-                      <p>Value: {(Math.random() * 100).toFixed(2)}</p>
-                      <p className="text-sm text-muted-foreground">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="shadow-none">
-                    <CardHeader><CardTitle className="text-lg font-medium">Placeholder Data Set 2</CardTitle></CardHeader>
-                    <CardContent className="space-y-1">
-                      <p>Row 1: Some filler text here.</p>
-                      <Separator/>
-                      <p>Row 2: Another line simulating data.</p>
-                      <Separator/>
-                      <p className="text-sm text-muted-foreground">Excepteur sint occaecat cupidatat non proident.</p>
-                    </CardContent>
-                  </Card>
+                 {/* ... existing myNewsData cards ... */}
                    <Card className="shadow-none">
-                    <CardHeader><CardTitle className="text-lg font-medium">Filler Section 3</CardTitle></CardHeader>
-                    <CardContent>
-                      <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam.</p>
-                    </CardContent>
-                  </Card>
+                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Top News Affecting You</CardTitle><Newspaper className="h-5 w-5 text-muted-foreground" /></CardHeader>
+                     <CardContent><ul className="space-y-3">{entry.myNewsData.newsItems.map(item => (
+                       <li key={item.id} className="text-sm border-b pb-3 last:border-none flex justify-between items-start gap-4">
+                         <div className="flex-grow">
+                           <p className="font-medium">{item.headline}</p>
+                           <p className="text-xs text-muted-foreground">{item.source}</p>
+                         </div>
+                         <Badge variant={item.impact === 'Positive' ? 'default' : item.impact === 'Negative' ? 'destructive' : 'outline'} className="ml-1 text-xs flex-shrink-0 mt-0.5">{item.impact}</Badge>
+                       </li>
+                     ))}</ul></CardContent>
+                   </Card>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <Card className="shadow-none">
+                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Account Overview</CardTitle><Briefcase className="h-5 w-5 text-muted-foreground" /></CardHeader>
+                       <CardContent><Table><TableHeader><TableRow><TableHead>Account</TableHead><TableHead className="text-right">Balance</TableHead><TableHead className="text-right">Change</TableHead></TableRow></TableHeader><TableBody>{entry.myNewsData.accounts.map(acc => (<TableRow key={acc.id}><TableCell className="font-medium">{acc.name}</TableCell><TableCell className="text-right">{acc.balance}</TableCell><TableCell className={`text-right text-xs ${acc.change.startsWith('+') ? 'text-green-600' : acc.change.startsWith('-') ? 'text-red-600' : 'text-muted-foreground'}`}>{acc.change}</TableCell></TableRow>))}</TableBody></Table></CardContent>
+                     </Card>
+                     <Card className="shadow-none">
+                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Daily Movers</CardTitle><Activity className="h-5 w-5 text-muted-foreground" /></CardHeader>
+                       <CardContent><ul className="space-y-2">{entry.myNewsData.movers.map(mover => (<li key={mover.id} className="flex justify-between items-center text-sm"><span className="font-medium">{mover.ticker}</span><Badge variant={mover.changePercent.startsWith('+') ? 'default' : 'destructive'}>{mover.changePercent}</Badge></li>))}</ul></CardContent>
+                     </Card>
+                   </div>
+                   <Card className="shadow-none">
+                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Suggested Next Steps</CardTitle><Lightbulb className="h-5 w-5 text-muted-foreground" /></CardHeader>
+                     <CardContent><ul className="space-y-2 text-sm">{entry.myNewsData.nextActions.map(action => (<li key={action.id} className="flex items-center"><Button variant="link" size="sm" className="p-0 h-auto mr-2 text-muted-foreground hover:text-primary">{action.text}</Button></li>))}</ul></CardContent>
+                   </Card>
+                   {/* ADDED: Placeholder Sector News Card */}
+                   <Card className="shadow-none">
+                     <CardHeader><CardTitle>Sector News</CardTitle></CardHeader>
+                     <CardContent>
+                       <ul className="space-y-2">
+                         <li className="text-sm">Technology sector shows signs of consolidation.</li>
+                         <li className="text-sm">Renewable energy investments continue to grow.</li>
+                       </ul>
+                       <Button variant="link" size="sm" className="p-0 h-auto mt-2">View More Sector News</Button>
+                     </CardContent>
+                   </Card>
               </div>
             )}
-            {/* Fallback within entry if somehow no data was generated (shouldn't happen with current logic) */}
-            {!entry.myNewsData && !entry.stockData && !entry.generalInfo && ( <Card className="shadow-none"><CardHeader><CardTitle>No Results</CardTitle></CardHeader><CardContent><p>Could not fetch or generate data for &quot;{entry.query}&quot;. Please try another query.</p></CardContent></Card> )}
 
-            {/* Add separator between entries, but not after the last one */}
+            {/* Stock Section */}
+            {entry.stockData && (
+              <div className="space-y-4">
+                 {/* ... existing stockData cards ... */}
+                   <Card className="shadow-none">
+                     <CardContent className="py-4 px-3 space-y-4"> 
+                       <div className="flex justify-between items-center">
+                         <div>
+                           <h1 className="text-3xl font-bold">{entry.stockData.ticker}</h1>
+                           <p className="text-sm text-muted-foreground">{entry.stockData.companyName}</p>
+                           {entry.stockData.analystRating && (
+                              <p className="flex items-center text-xs mt-1"> 
+                               <span className="font-medium text-foreground mr-1">Analyst Rating:</span> 
+                               <Badge variant={entry.stockData.analystRating === 'Buy' ? 'default' : entry.stockData.analystRating === 'Hold' ? 'secondary' : 'destructive'} className="text-xs">{entry.stockData.analystRating}</Badge>
+                              </p>
+                           )}
+                         </div>
+                         <div className={`text-right`}>
+                            <p className={`text-2xl font-semibold ${entry.stockData.isUp ? 'text-green-600' : 'text-red-600'}`}>${entry.stockData.price}</p>
+                            <p className={`text-sm ${entry.stockData.isUp ? 'text-green-600' : 'text-red-600'} flex items-center justify-end`}>
+                              {entry.stockData.isUp ? <TrendingUp className="h-4 w-4 mr-1" /> : <TrendingDown className="h-4 w-4 mr-1" />}
+                              {entry.stockData.change} ({entry.stockData.changePercent}%)
+                            </p>
+                         </div>
+                       </div>
+                       <Separator /> 
+                       <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+                          {entry.stockData.volume && <p><span className="font-medium text-foreground">Volume:</span> {entry.stockData.volume}</p>}
+                          {entry.stockData.marketCap && <p><span className="font-medium text-foreground">Mkt Cap:</span> {entry.stockData.marketCap}</p>}
+                          {/* Simplified Day High/Low for brevity */}
+                          {/* ... other stats ... */}
+                          {entry.stockData.peRatio && <p><span className="font-medium text-foreground">P/E Ratio:</span> {entry.stockData.peRatio}</p>}
+                          {entry.stockData.dividendYield && <p><span className="font-medium text-foreground">Div Yield:</span> {entry.stockData.dividendYield}</p>}
+                       </div>
+                     </CardContent>
+                   </Card>
+                   <InteractiveLineChartComponent />
+                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                     {entry.lineChartData.length > 0 && ( <Card className="shadow-none"> <CardHeader><CardTitle>Price Trend (6 Months)</CardTitle><CardDescription>Showing simulated price movement.</CardDescription></CardHeader><CardContent><ChartContainer config={originalChartConfig} className="h-[200px] w-full"><LineChart data={entry.lineChartData} margin={{ top: 5, right: 20, left: -10, bottom: 0 }}><CartesianGrid strokeDasharray="3 3" vertical={false}/><XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} /><YAxis tickLine={false} axisLine={false} tickMargin={8} /><Tooltip content={<ChartTooltipContent hideLabel indicator="line" />} /><Line dataKey="value" type="monotone" stroke="var(--color-value)" strokeWidth={2} dot={false} /></LineChart></ChartContainer></CardContent><CardFooter><div className="text-xs text-muted-foreground">Data simulated for demonstration.</div></CardFooter></Card>)}
+                     <BarChartComponent /> 
+                     {entry.pieChartData.length > 0 && (<Card className="shadow-none"><CardHeader><CardTitle>Asset Allocation (Simulated)</CardTitle><CardDescription>Distribution across asset classes.</CardDescription></CardHeader><CardContent className="flex items-center justify-center py-4"><ChartContainer config={originalChartConfig} className="mx-auto aspect-square h-[200px]"><PieChart><ChartTooltip content={<ChartTooltipContent hideLabel nameKey="category" />} /><Pie data={entry.pieChartData} dataKey="value" nameKey="category" innerRadius={50} outerRadius={80} strokeWidth={2}>{entry.pieChartData.map((pieEntry, index) => (<Cell key={`cell-${index}`} fill={pieEntry.fill} />))}</Pie><ChartLegend content={<ChartLegendContent nameKey="category" />} /></PieChart></ChartContainer></CardContent><CardFooter><div className="text-xs text-muted-foreground">Values represent simulated portfolio.</div></CardFooter></Card>)}
+                   </div>
+                   {/* ADDED: Placeholder Key Financial Ratios Card */}
+                   <Card className="shadow-none">
+                     <CardHeader><CardTitle>Key Financial Ratios</CardTitle></CardHeader>
+                     <CardContent>
+                       <Table>
+                         <TableHeader>
+                           <TableRow>
+                             <TableHead>Ratio</TableHead>
+                             <TableHead className="text-right">Value</TableHead>
+                           </TableRow>
+                         </TableHeader>
+                         <TableBody>
+                           <TableRow>
+                             <TableCell>Debt-to-Equity</TableCell>
+                             <TableCell className="text-right">0.45</TableCell>
+                           </TableRow>
+                           <TableRow>
+                             <TableCell>Current Ratio</TableCell>
+                             <TableCell className="text-right">1.8</TableCell>
+                           </TableRow>
+                           <TableRow>
+                             <TableCell>Return on Equity (ROE)</TableCell>
+                             <TableCell className="text-right">15.2%</TableCell>
+                           </TableRow>
+                         </TableBody>
+                       </Table>
+                     </CardContent>
+                     <CardFooter><p className="text-xs text-muted-foreground">Simulated ratio data.</p></CardFooter>
+                   </Card>
+              </div>
+            )}
+
+            {/* General Info Section (Fallback for non-stock/news/definition) */}
+            {entry.generalInfo && (
+              <div className="space-y-4">
+                 {/* ... existing generalInfo cards ... */}
+                  <Card className="shadow-none"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Definition</CardTitle><Info className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><p className="text-sm">{entry.generalInfo.definition}</p></CardContent></Card>
+                  {/* ... other placeholder cards ... */}
+                  {/* ADDED: Placeholder Related Topics Card */}
+                  <Card className="shadow-none">
+                    <CardHeader><CardTitle>Related Topics</CardTitle></CardHeader>
+                    <CardContent className="space-y-1">
+                       <Button variant="link" className="p-0 h-auto text-sm">Topic X</Button><br/>
+                       <Button variant="link" className="p-0 h-auto text-sm">Concept Y</Button><br/>
+                       <Button variant="link" className="p-0 h-auto text-sm">Term Z</Button>
+                    </CardContent>
+                  </Card>
+               </div>
+            )}
+
+            {/* Fallback if somehow no data type matched */}
+            {!entry.definitionData && !entry.myNewsData && !entry.stockData && !entry.generalInfo && ( 
+              <Card className="shadow-none"><CardHeader><CardTitle>No Specific Results</CardTitle></CardHeader><CardContent><p>Could not generate specific results for &quot;{entry.query}&quot;. Please try rephrasing.</p></CardContent></Card> 
+            )}
+
             {index < resultsHistory.length - 1 && <Separator className="my-6" />}
         </Fragment>
       ))}
 
-      {/* Replace skeleton card with spinner - Add ref here */}
+      {/* Loading Indicator */}
       {isLoadingNewSection && (
-        <div ref={loaderRef} className="w-full pt-12 border-t mt-6 flex flex-col items-center justify-center"> 
+        <div ref={loaderRef} className="w-full pt-12 mt-6 flex flex-col items-center justify-center">
            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
            <p className="text-sm text-muted-foreground pt-2 text-center">Loading results for: {processingQueryRef.current ?? currentQuery}...</p>
         </div>
       )}
-      
     </div>
   );
 } 

@@ -31,7 +31,9 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
   // Determine background based on route
   const isResultsOrAdvisorPage = pathname.startsWith('/results') || pathname.startsWith('/advisor');
-  const backgroundClass = isResultsOrAdvisorPage ? 'bg-[#F9F7F5]' : 'bg-background';
+  const isContentPage = pathname.startsWith('/results') 
+                     || pathname.startsWith('/advisor');
+  const backgroundClass = isContentPage ? 'bg-[#F9F7F5]' : 'bg-background';
 
   return (
     <TooltipProvider>
@@ -62,7 +64,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
             </div>
           </main>
           
-          {(pathname.startsWith('/results') || pathname.startsWith('/advisor')) && (
+          {isContentPage && (
             <FloatingInputBar /> 
           )}
         </div>
