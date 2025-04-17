@@ -1,38 +1,73 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Button } from '@/components/ui/button';
+import { Header } from '@/components/Header';
+import { FloatingInputBar } from '@/components/FloatingInputBar';
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  // --- Desktop Sidebar State ---
+  const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(true);
+  // --- Mobile Menu State ---
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
   const pathname = usePathname();
 
-  const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed);
+  const toggleDesktopSidebar = () => {
+    setIsDesktopCollapsed(!isDesktopCollapsed);
   };
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+  
+  // Close mobile menu on path change (optional but good UX)
+  useEffect(() => {
+      setIsMobileMenuOpen(false);
+  }, [pathname]);
 
   // Determine background based on route
   const isResultsOrAdvisorPage = pathname.startsWith('/results') || pathname.startsWith('/advisor');
   const backgroundClass = isResultsOrAdvisorPage ? 'bg-[#F9F7F5]' : 'bg-background';
 
   return (
-    <div className={cn("flex h-screen", backgroundClass)}>
-      <Sidebar isCollapsed={isCollapsed} toggleSidebar={toggleSidebar} />
-      <main
-        id="main-scroll-area"
-        className={cn(
-          "flex-1 overflow-y-auto transition-all duration-300 ease-in-out"
-        )}
-      >
-        <div className={cn(
-          "w-full max-w-[800px] mx-auto py-8",
-          !pathname.startsWith('/results') && "px-4 sm:px-6 lg:px-8"
-        )}>
-          {children}
+    <TooltipProvider>
+      <Header toggleMobileMenu={toggleMobileMenu} />
+      
+      <div className={cn("flex h-screen pt-16", backgroundClass)}>
+        <Sidebar 
+          isDesktopCollapsed={isDesktopCollapsed} 
+          toggleDesktopSidebar={toggleDesktopSidebar} 
+          isMobileMenuOpen={isMobileMenuOpen}
+          closeMobileMenu={() => setIsMobileMenuOpen(false)}
+        />
+        <div 
+          id="content-scroll-wrapper" 
+          className={cn(
+            "flex-1 overflow-y-auto p-6",
+            isDesktopCollapsed ? "md:ml-16" : "md:ml-52"
+          )}
+        >
+          <main
+            id="main-scroll-area"
+            className={cn("mb-6")}
+          >
+            <div className={cn(
+              "w-full max-w-[800px] mx-auto",
+            )}>
+              {children}
+            </div>
+          </main>
+          
+          {(pathname.startsWith('/results') || pathname.startsWith('/advisor')) && (
+            <FloatingInputBar /> 
+          )}
         </div>
-      </main>
-    </div>
+      </div>
+    </TooltipProvider>
   );
 } 

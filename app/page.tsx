@@ -157,13 +157,13 @@ export default function Home() {
       <div className="flex space-x-4">
         <Button 
           variant="outline"
-          onClick={() => navigateToResults('AAPL')}
+          onClick={() => navigateToResults('How\'s AAPL doing?')}
         >
           How&apos;s AAPL doing?
         </Button>
         <Button 
           variant="outline"
-          onClick={() => navigateToResults('myNews')}
+          onClick={() => navigateToResults('What news has affected me today?')}
         >
           What news has affected me today?
         </Button>

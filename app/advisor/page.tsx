@@ -7,7 +7,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import { FloatingInputBar } from '@/components/FloatingInputBar';
 
 export default function AdvisorPage() {
   const [date, setDate] = React.useState<Date | undefined>(new Date());
@@ -15,15 +14,6 @@ export default function AdvisorPage() {
   return (
     <div className="relative min-h-screen">
       <main className="flex flex-col items-center pb-32">
-        <div className="w-full max-w-[800px] my-8 self-start">
-          <Link href="/" passHref>
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Search
-            </Button>
-          </Link>
-        </div>
-
         <div className="w-full max-w-[800px] space-y-6">
           <h1 className="text-3xl font-semibold">Advisor Dashboard</h1>
 
@@ -63,8 +53,6 @@ export default function AdvisorPage() {
           </Card>
         </div>
       </main>
-
-      <FloatingInputBar />
     </div>
   );
 } 

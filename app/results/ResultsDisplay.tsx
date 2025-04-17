@@ -233,11 +233,28 @@ export default function ResultsDisplay() {
       setIsLoadingNewSection(true);
       const queryToProcess = currentQuery; 
 
+      // --- Determine Data Key --- 
+      let dataQueryKey = queryToProcess; // Default to original query
+      const lowerQuery = queryToProcess.toLowerCase();
+      if (lowerQuery.includes('apple') || lowerQuery.includes('aapl')) {
+        dataQueryKey = 'AAPL';
+      } else if (lowerQuery.includes('google') || lowerQuery.includes('googl')) {
+        dataQueryKey = 'GOOGL';
+      } else if (lowerQuery.includes('microsoft') || lowerQuery.includes('msft')) {
+        dataQueryKey = 'MSFT';
+      } else if (lowerQuery.includes('news')) {
+        dataQueryKey = 'myNews';
+      }
+      // Add more mappings as needed...
+      // --- End Determine Data Key ---
+
       // Revert timeout logic: create final entry object inside timeout
-      const timerId = setTimeout(async () => {
-        const isMyNews = queryToProcess === 'myNews';
-        const newStockData = !isMyNews ? getStockData(queryToProcess) : null;
-        const newGeneralInfo = !isMyNews && !newStockData ? getGeneralInfo(queryToProcess) : null;
+      // Pass original query explicitly to the timeout callback
+      const timerId = setTimeout(async (originalQueryForTitle) => {
+        // Use dataQueryKey for data fetching logic
+        const isMyNews = dataQueryKey === 'myNews';
+        const newStockData = !isMyNews ? getStockData(dataQueryKey) : null;
+        const newGeneralInfo = !isMyNews && !newStockData ? getGeneralInfo(dataQueryKey) : null;
         const newMyNewsData = isMyNews ? getMyNewsData() : null;
 
         let newLineChartData: LineChartDataPoint[] = [];
@@ -254,11 +271,12 @@ export default function ResultsDisplay() {
             { category: "Alternatives", value: 1200, fill: "var(--color-alternatives)" },
           ];
         }
+        // --- End chart data generation ---
 
-        // Create the final entry directly
+        // Create the final entry directly - Use the passed original query for display
         const newEntry: ResultEntry = {
           id: uuidv4(),
-          query: queryToProcess,
+          query: originalQueryForTitle, // <-- Use the explicitly passed original query
           stockData: newStockData,
           generalInfo: newGeneralInfo,
           myNewsData: newMyNewsData,
@@ -272,7 +290,7 @@ export default function ResultsDisplay() {
         setIsLoadingNewSection(false);
         processingQueryRef.current = null; 
 
-      }, 2000);
+      }, 2000, queryToProcess); // <-- Pass queryToProcess as argument here
 
       return () => clearTimeout(timerId);
     };
@@ -319,8 +337,8 @@ export default function ResultsDisplay() {
       {/* Revert Map logic: Render all entries directly */}
       {resultsHistory.map((entry, index) => (
         <Fragment key={entry.id}>
-            {/* Render actual content directly */}
-            <h2 id={`title-${entry.id}`} className="text-xl font-semibold pt-4 border-t mt-6">Results for: {entry.query}</h2>
+            {/* Render actual content directly - Only display query in heading */}
+            <h2 id={`title-${entry.id}`} className="text-xl font-semibold pt-4 border-t mt-6">{entry.query}</h2>
             {entry.myNewsData && (
               <div className="space-y-6">
                  {/* ... myNewsData cards ... */}
