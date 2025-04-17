@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 
 export function HighConfidenceResults() {
   const hsaActions = [
-    { label: "Check Eligibility", variant: "outline" as const, onClick: () => alert('Checking HSA eligibility...') },
-    { label: "Maximize Contribution", variant: "default" as const, onClick: () => alert('Opening contribution workflow...') },
+    { label: "Check Eligibility", variant: "outline" as const },
+    { label: "Maximize Contribution", variant: "default" as const },
   ];
 
   return (
@@ -51,7 +51,7 @@ export function HighConfidenceResults() {
             </CardHeader>
             <CardContent className="space-y-2">
               <p className="text-sm">You can still contribute $1,749.28 towards the 2024 family limit ($8,300).</p>
-              <Button size="sm" onClick={() => alert('Opening contribution workflow...')}>Contribute Now</Button>
+              <Button size="sm">Contribute Now</Button>
             </CardContent>
           </Card>
         </div>
