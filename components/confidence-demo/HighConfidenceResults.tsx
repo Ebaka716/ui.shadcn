@@ -22,7 +22,7 @@ export function HighConfidenceResults() {
               <strong>Important Considerations:</strong>
               <ul className="list-disc list-inside ml-4 text-sm">
                 <li>Must be enrolled in a High-Deductible Health Plan (HDHP).</li>
-                <li>Annual contribution limits apply (check current year's limits).</li>
+                <li>Annual contribution limits apply (check current year&apos;s limits).</li>
                 <li>Keep records of qualified medical expenses.</li>
                 <li>Funds can be used for non-medical expenses after age 65 (subject to income tax).</li>
               </ul>
