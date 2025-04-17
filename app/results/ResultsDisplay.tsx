@@ -212,6 +212,7 @@ export default function ResultsDisplay() {
   const processingQueryRef = useRef<string | null>(null);
   const historyContainerRef = useRef<HTMLDivElement>(null);
   const prevHistoryLengthRef = useRef<number>(0);
+  const loaderRef = useRef<HTMLDivElement>(null); // <-- Add ref for loader
 
   // Effect to process new queries (with delay)
   useEffect(() => {
@@ -281,22 +282,17 @@ export default function ResultsDisplay() {
   // Revert dependency array
   }, [currentQuery, resultsHistory]); 
 
-  // Re-introduce effect for scrolling on isLoadingNewSection
+  // Re-introduce effect for scrolling, but target the loader
   useEffect(() => {
-    if (isLoadingNewSection) {
-      // Find the main scrolling container by ID
-      const scrollContainer = document.getElementById('main-scroll-area');
-      if (scrollContainer) {
-        // Scroll the container to its bottom
-        scrollContainer.scrollTo({
-          top: scrollContainer.scrollHeight,
-          behavior: 'smooth'
-        });
-      }
+    if (isLoadingNewSection && loaderRef.current) {
+      loaderRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center' // Try centering the loader
+      });
     }
   }, [isLoadingNewSection]);
 
-  // LayoutEffect for scrolling (remains unchanged)
+  // LayoutEffect for scrolling - change block back to 'start'
   useLayoutEffect(() => {
     if (resultsHistory.length > prevHistoryLengthRef.current) {
         const latestEntryId = resultsHistory[resultsHistory.length - 1]?.id;
@@ -306,7 +302,7 @@ export default function ResultsDisplay() {
             if (targetElement) {
               targetElement.scrollIntoView({ 
                   behavior: "smooth",
-                  block: "start" 
+                  block: "start" // <-- Change back to start
               });
             }
         }
@@ -448,9 +444,9 @@ export default function ResultsDisplay() {
         </Fragment>
       ))}
 
-      {/* Replace skeleton card with spinner */}
+      {/* Replace skeleton card with spinner - Add ref here */}
       {isLoadingNewSection && (
-        <div className="w-full pt-12 border-t mt-6 flex flex-col items-center justify-center"> 
+        <div ref={loaderRef} className="w-full pt-12 border-t mt-6 flex flex-col items-center justify-center"> 
            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
            <p className="text-sm text-muted-foreground pt-2 text-center">Loading results for: {processingQueryRef.current ?? currentQuery}...</p>
         </div>
