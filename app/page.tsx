@@ -120,6 +120,12 @@ export default function Home() {
                setInputValue(value);
             }}
             onFocus={() => setIsListOpen(suggestions.length > 0 && !!inputValue)}
+            onKeyDown={(event: React.KeyboardEvent) => {
+              if (event.key === 'Enter' && inputValue) {
+                event.preventDefault(); 
+                navigateToResults(inputValue);
+              }
+            }}
             className=""
           />
 
