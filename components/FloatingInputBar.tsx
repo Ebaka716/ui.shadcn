@@ -30,6 +30,7 @@ export function FloatingInputBar(/* { isDesktopCollapsed } */) {
   const router = useRouter();
   const [inputValue, setInputValue] = useState("");
   const [focusMode, setFocusMode] = useState("Learning Center");
+  const [isFocused, setIsFocused] = useState(false);
 
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -49,13 +50,20 @@ export function FloatingInputBar(/* { isDesktopCollapsed } */) {
           onSubmit={handleFormSubmit}
           className="w-full"
         >
-          <div className="rounded-lg border shadow-xl bg-white overflow-hidden flex flex-col">
+          <div 
+            className={cn(
+              "rounded-lg shadow-xl bg-white overflow-hidden flex flex-col transition-colors duration-200",
+              isFocused ? "border border-neutral-400 dark:border-neutral-600" : "border dark:border-neutral-800"
+            )}
+          >
             <div className="flex items-center h-14 px-3 gap-2">
               <Input
                 type="text"
                 placeholder="Ask follow-up questions..."
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
                 className="h-full flex-grow border-none outline-none shadow-none ring-0 focus:ring-0 focus:border-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent p-0"
               />
               <Button
