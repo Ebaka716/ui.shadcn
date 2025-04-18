@@ -3,6 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import React, { useState, useEffect, Fragment, useRef, useLayoutEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendingUp, TrendingDown, Newspaper, Info, Briefcase, Activity, Lightbulb, Atom } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -212,18 +213,17 @@ export default function ResultsDisplay() {
 
   const [resultsHistory, setResultsHistory] = useState<ResultEntry[]>([]);
   const [isLoadingNewSection, setIsLoadingNewSection] = useState<boolean>(false);
-  // Add state for the expanded allocation view
   const [expandedAllocationData, setExpandedAllocationData] = useState<PieChartDataPoint[] | null>(null);
   const [expandedAllocationTicker, setExpandedAllocationTicker] = useState<string | null>(null);
-  // New state for loading expanded view
   const [isLoadingExpandedView, setIsLoadingExpandedView] = useState<boolean>(false);
   const [pendingExpansionData, setPendingExpansionData] = useState<{ data: PieChartDataPoint[], ticker: string | null } | null>(null);
-  
+  const [activeStockViews, setActiveStockViews] = useState<{ [entryId: string]: string }>({});
+
   const processingQueryRef = useRef<string | null>(null);
   const historyContainerRef = useRef<HTMLDivElement>(null);
   const prevHistoryLengthRef = useRef<number>(0);
   const loaderRef = useRef<HTMLDivElement>(null);
-  const expandedLoaderRef = useRef<HTMLDivElement>(null); // Ref for expanded loader
+  const expandedLoaderRef = useRef<HTMLDivElement>(null);
 
   // Effect to process new queries
   useEffect(() => {
@@ -330,6 +330,11 @@ export default function ResultsDisplay() {
         };
 
         setResultsHistory(prev => [...prev, newEntry]);
+        // --- Initialize active view for the new entry ---
+        if (newStockData) {
+          setActiveStockViews(prev => ({ ...prev, [newEntry.id]: 'Overview' }));
+        }
+        // --- End Initialization ---
         setIsLoadingNewSection(false);
         processingQueryRef.current = null; 
 
@@ -382,11 +387,13 @@ export default function ResultsDisplay() {
         behavior: 'smooth', 
         block: 'center' 
       });
+      console.log("[Expanded View] Loader scrolled into view.");
 
       // Simulate loading delay
       const timerId = setTimeout(() => {
         // Store ticker locally before clearing pending data
         const tickerToScrollTo = pendingExpansionData.ticker;
+        console.log("[Expanded View] Ticker to scroll to:", tickerToScrollTo);
         
         // Set the actual data to render the component
         setExpandedAllocationData(pendingExpansionData.data);
@@ -397,14 +404,23 @@ export default function ResultsDisplay() {
         // Now scroll the NEWLY RENDERED title into view
         // Use requestAnimationFrame to ensure element exists after state update
         requestAnimationFrame(() => {
-          if (tickerToScrollTo) {
-            const targetElementId = `title-expanded-allocation-${tickerToScrollTo}`; 
-            const targetElement = document.getElementById(targetElementId);
-            targetElement?.scrollIntoView({ 
-              behavior: 'smooth', 
-              block: 'start' // Match new result scroll
-            });
-          }
+          console.log("[Expanded View] requestAnimationFrame fired."); 
+          // Add a small timeout to ensure DOM update completes
+          setTimeout(() => {
+            console.log("[Expanded View] setTimeout inside rAF fired."); // New log
+            if (tickerToScrollTo) {
+              const targetElementId = `title-expanded-allocation-${tickerToScrollTo}`; 
+              console.log("[Expanded View] Target Element ID:", targetElementId);
+              const targetElement = document.getElementById(targetElementId);
+              console.log("[Expanded View] Target Element Found:", targetElement);
+              targetElement?.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' // Match new result scroll
+              });
+            } else {
+               console.error("[Expanded View] No ticker found to scroll to!");
+            }
+          }, 10); // 10ms delay
         });
 
       }, 1500); // Simulate 1.5 second load
@@ -416,59 +432,66 @@ export default function ResultsDisplay() {
   return (
     <div ref={historyContainerRef} className="w-full space-y-6">
       
-      {resultsHistory.map((entry, index) => (
-        <Fragment key={entry.id}>
-            <h2 
-              id={`title-${entry.id}`} 
-              className="text-xl font-semibold pt-4 mt-6 flex items-center gap-2"
-            >
-              <Atom className="h-5 w-5 text-muted-foreground flex-shrink-0"/>
-              {entry.query}
-            </h2>
-            
-            {/* Definition Section */}
-            {entry.definitionData && (
-              <div className="space-y-6">
-                 <Card className="shadow-none">
-                   <CardHeader>
-                     <CardTitle>Definition</CardTitle>
-                   </CardHeader>
-                   <CardContent>
-                     <div className="text-base space-y-4">
-                       <p>{entry.definitionData.definition}</p>
-                       <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-                       <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-                     </div>
-                   </CardContent>
-                 </Card>
-                 {/* Add placeholder action cards (could be dynamic later) */}
-                 <Card className="shadow-none">
-                   <CardHeader><CardTitle>Analyze Stocks by P/E</CardTitle></CardHeader>
-                   <CardContent><Button variant="outline" size="sm">Go to Screener</Button></CardContent>
-                 </Card>
-                 <Card className="shadow-none">
-                   <CardHeader><CardTitle>Compare Industry Ratios</CardTitle></CardHeader>
-                   <CardContent><Button variant="outline" size="sm">View Comparison</Button></CardContent>
-                 </Card>
-                 {/* Added More Placeholder Action Cards */}
-                  <Card className="shadow-none">
-                   <CardHeader><CardTitle>Related Concepts</CardTitle></CardHeader>
-                   <CardContent className="space-y-2">
-                     <Button variant="link" className="p-0 h-auto text-sm">Price-to-Book (P/B) Ratio</Button><br/>
-                     <Button variant="link" className="p-0 h-auto text-sm">Dividend Yield</Button>
-                    </CardContent>
-                 </Card>
-                 <Card className="shadow-none">
-                   <CardHeader><CardTitle>Historical Trend</CardTitle></CardHeader>
-                   <CardContent><p className="text-sm text-muted-foreground">View the historical trend of this metric for relevant entities.</p><Button variant="outline" size="sm" className="mt-2">View Trend</Button></CardContent>
-                 </Card>
-               </div>
-            )}
+      {resultsHistory.map((entry, index) => {
+        const viewNames = [ 
+          'Overview', 'Charts', 'Dividends & Earnings', 'Sentiment', 
+          'Analyst Ratings', 'Comparison', 'Statistics'
+        ];
 
-            {/* News Section */}
-            {entry.myNewsData && (
-              <div className="space-y-6">
-                 {/* ... existing myNewsData cards ... */}
+        return (
+          <Fragment key={entry.id}>
+              {/* --- Standard H2 --- */}
+              <h2 
+                id={`title-${entry.id}`} 
+                className="text-xl font-semibold pt-4 mt-6 flex items-center gap-2" /* Restored original classes */
+              >
+                <Atom className="h-5 w-5 text-muted-foreground flex-shrink-0"/>
+                {entry.query}
+              </h2>
+              
+              {/* --- Content Area (Below Sticky Header) --- */}
+              {/* Definition Section */}
+              {entry.definitionData && (
+                 <div className="mt-4"> 
+                   <Card className="shadow-none">
+                     <CardHeader>
+                       <CardTitle>Definition</CardTitle>
+                     </CardHeader>
+                     <CardContent>
+                       <div className="text-base space-y-4">
+                         <p>{entry.definitionData.definition}</p>
+                         <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+                         <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                       </div>
+                     </CardContent>
+                   </Card>
+                   {/* Add placeholder action cards (could be dynamic later) */}
+                   <Card className="shadow-none">
+                     <CardHeader><CardTitle>Analyze Stocks by P/E</CardTitle></CardHeader>
+                     <CardContent><Button variant="outline" size="sm">Go to Screener</Button></CardContent>
+                   </Card>
+                   <Card className="shadow-none">
+                     <CardHeader><CardTitle>Compare Industry Ratios</CardTitle></CardHeader>
+                     <CardContent><Button variant="outline" size="sm">View Comparison</Button></CardContent>
+                   </Card>
+                   {/* Added More Placeholder Action Cards */}
+                    <Card className="shadow-none">
+                     <CardHeader><CardTitle>Related Concepts</CardTitle></CardHeader>
+                     <CardContent className="space-y-2">
+                       <Button variant="link" className="p-0 h-auto text-sm">Price-to-Book (P/B) Ratio</Button><br/>
+                       <Button variant="link" className="p-0 h-auto text-sm">Dividend Yield</Button>
+                      </CardContent>
+                   </Card>
+                   <Card className="shadow-none">
+                     <CardHeader><CardTitle>Historical Trend</CardTitle></CardHeader>
+                     <CardContent><p className="text-sm text-muted-foreground">View the historical trend of this metric for relevant entities.</p><Button variant="outline" size="sm" className="mt-2">View Trend</Button></CardContent>
+                   </Card>
+                 </div>
+              )}
+
+              {/* News Section */}
+              {entry.myNewsData && (
+                 <div className="mt-4 space-y-6"> {/* Add space-y back */}
                    <Card className="shadow-none">
                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Top News Affecting You</CardTitle><Newspaper className="h-5 w-5 text-muted-foreground" /></CardHeader>
                      <CardContent><ul className="space-y-3">{entry.myNewsData.newsItems.map(item => (
@@ -506,151 +529,243 @@ export default function ResultsDisplay() {
                        <Button variant="link" size="sm" className="p-0 h-auto mt-2">View More Sector News</Button>
                      </CardContent>
                    </Card>
-              </div>
-            )}
+                 </div>
+              )}
 
-            {/* Stock Section */}
-            {entry.stockData && (
-              <div className="space-y-4">
-                 {/* ... existing stockData cards ... */}
-                   <Card className="shadow-none">
-                     <CardContent className="px-6 py-4 space-y-4"> 
-                       <div className="flex justify-between items-center">
-                         <div>
-                           <h1 className="text-3xl font-bold">{entry.stockData.ticker}</h1>
-                           <p className="text-sm text-muted-foreground">{entry.stockData.companyName}</p>
-                           {entry.stockData.analystRating && (
-                              <p className="flex items-center text-xs mt-1"> 
-                               <span className="font-medium text-foreground mr-1">Analyst Rating:</span> 
-                               <Badge variant={entry.stockData.analystRating === 'Buy' ? 'default' : entry.stockData.analystRating === 'Hold' ? 'secondary' : 'destructive'} className="text-xs">{entry.stockData.analystRating}</Badge>
-                              </p>
-                           )}
-                         </div>
-                         <div className={`text-right`}>
-                            <p className={`text-2xl font-semibold ${entry.stockData.isUp ? 'text-green-600' : 'text-red-600'}`}>${entry.stockData.price}</p>
-                            <p className={`text-sm ${entry.stockData.isUp ? 'text-green-600' : 'text-red-600'} flex items-center justify-end`}>
-                              {entry.stockData.isUp ? <TrendingUp className="h-4 w-4 mr-1" /> : <TrendingDown className="h-4 w-4 mr-1" />}
-                              {entry.stockData.change} ({entry.stockData.changePercent}%)
-                            </p>
-                         </div>
-                       </div>
-                       <Separator /> 
-                       <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-                          {entry.stockData.volume && <p><span className="font-medium text-foreground">Volume:</span> {entry.stockData.volume}</p>}
-                          {entry.stockData.marketCap && <p><span className="font-medium text-foreground">Mkt Cap:</span> {entry.stockData.marketCap}</p>}
-                          {entry.stockData.peRatio && <p><span className="font-medium text-foreground">P/E Ratio:</span> {entry.stockData.peRatio}</p>}
-                          {entry.stockData.dividendYield && <p><span className="font-medium text-foreground">Div Yield:</span> {entry.stockData.dividendYield}</p>}
-                          <p><span className="font-medium text-foreground">Prev Close:</span> <span className="italic">N/A</span></p>
-                          <p><span className="font-medium text-foreground">Day&apos;s Range:</span> <span className="italic">N/A</span></p>
-                          <p><span className="font-medium text-foreground">52wk High:</span> <span className="italic">N/A</span></p>
-                          <p><span className="font-medium text-foreground">52wk Low:</span> <span className="italic">N/A</span></p>
-                       </div>
-                     </CardContent>
-                   </Card>
-                   <InteractiveLineChartComponent />
-                   {/* Reorder charts: Pie chart first, then Line chart, then Bar chart */}
-                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                     {entry.pieChartData.length > 0 && (
-                       <button 
-                         className="text-left w-full hover:bg-muted/50 p-0 rounded-lg transition-colors duration-150" 
-                         onClick={() => {
-                           setExpandedAllocationData(null);
-                           setExpandedAllocationTicker(null);
-                           setPendingExpansionData({ 
-                             data: entry.pieChartData, 
-                             ticker: entry.stockData?.ticker || null 
-                           });
-                           setIsLoadingExpandedView(true);
-                         }}
+              {/* Stock Section - Using Tabs (Non-Sticky) */}
+              {entry.stockData && (
+                 <Tabs 
+                   value={activeStockViews[entry.id] || 'Overview'} 
+                   onValueChange={(value) => setActiveStockViews(prev => ({ ...prev, [entry.id]: value }))}
+                   className="w-full" // REMOVED mt-4
+                 >
+                   {/* Standard TabsList */}
+                   <TabsList className="mb-4 w-full"> {/* REMOVED sticky classes, kept w-full, mb-4 */}
+                     {viewNames.map(viewName => (
+                       <TabsTrigger 
+                         key={viewName} 
+                         value={viewName} 
+                         className="flex-1" 
                        >
-                         <Card className="shadow-none cursor-pointer">
-                            <CardHeader><CardTitle>Asset Allocation (Simulated)</CardTitle><CardDescription>Distribution across asset classes.</CardDescription></CardHeader>
-                            <CardContent className="flex items-center justify-center py-4">
-                              <ChartContainer config={originalChartConfig} className="mx-auto aspect-square h-[200px]">
-                                <PieChart>
-                                  <ChartTooltip content={<ChartTooltipContent hideLabel nameKey="category" />} />
-                                  <Pie data={entry.pieChartData} dataKey="value" nameKey="category" innerRadius={50} outerRadius={80} strokeWidth={2}>{entry.pieChartData.map((pieEntry, index) => (<Cell key={`cell-${index}`} fill={pieEntry.fill} />))}</Pie>
-                                  <ChartLegend content={<ChartLegendContent nameKey="category" />} />
-                                </PieChart>
-                              </ChartContainer>
+                         {viewName}
+                       </TabsTrigger>
+                     ))}
+                   </TabsList>
+                   
+                   {/* TabsContent */} 
+                   {viewNames.map(viewName => (
+                     <TabsContent key={viewName} value={viewName} className="mt-0"> {/* REMOVED mt-4, kept mt-0 */}
+                       {viewName === 'Overview' ? (
+                          // --- Overview Content --- 
+                          <div className="space-y-4">
+                            {/* Stock Overview Card */}
+                            <Card className="shadow-none">
+                               <CardContent className="px-6 py-4 space-y-4">
+                                 {/* Ticker, Price, Stats */}
+                                 <div className="flex justify-between items-center">
+                                   {/* ... Ticker/Name/Rating ... */}
+                                   <div>
+                                    <h1 className="text-3xl font-bold">{entry.stockData!.ticker}</h1>
+                                    <p className="text-sm text-muted-foreground">{entry.stockData!.companyName}</p>
+                                    {entry.stockData!.analystRating && (
+                                       <p className="flex items-center text-xs mt-1"> 
+                                        <span className="font-medium text-foreground mr-1">Analyst Rating:</span> 
+                                        <Badge variant={entry.stockData!.analystRating === 'Buy' ? 'default' : entry.stockData!.analystRating === 'Hold' ? 'secondary' : 'destructive'} className="text-xs">{entry.stockData!.analystRating}</Badge>
+                                       </p>
+                                    )}
+                                   </div>
+                                   {/* ... Price/Change ... */}
+                                   <div className={`text-right`}>
+                                      <p className={`text-2xl font-semibold ${entry.stockData!.isUp ? 'text-green-600' : 'text-red-600'}`}>${entry.stockData!.price}</p>
+                                      <p className={`text-sm ${entry.stockData!.isUp ? 'text-green-600' : 'text-red-600'} flex items-center justify-end`}>
+                                        {entry.stockData!.isUp ? <TrendingUp className="h-4 w-4 mr-1" /> : <TrendingDown className="h-4 w-4 mr-1" />}
+                                        {entry.stockData!.change} ({entry.stockData!.changePercent}%)
+                                      </p>
+                                   </div>
+                                 </div>
+                                 <Separator /> 
+                                 {/* Details Row */}
+                                 <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+                                    {entry.stockData!.volume && <p><span className="font-medium text-foreground">Volume:</span> {entry.stockData!.volume}</p>}
+                                    {entry.stockData!.marketCap && <p><span className="font-medium text-foreground">Mkt Cap:</span> {entry.stockData!.marketCap}</p>}
+                                    {entry.stockData!.peRatio && <p><span className="font-medium text-foreground">P/E Ratio:</span> {entry.stockData!.peRatio}</p>}
+                                    {entry.stockData!.dividendYield && <p><span className="font-medium text-foreground">Div Yield:</span> {entry.stockData!.dividendYield}</p>}
+                                    <p><span className="font-medium text-foreground">Prev Close:</span> <span className="italic">N/A</span></p>
+                                    <p><span className="font-medium text-foreground">Day&apos;s Range:</span> <span className="italic">N/A</span></p>
+                                    <p><span className="font-medium text-foreground">52wk High:</span> <span className="italic">N/A</span></p>
+                                    <p><span className="font-medium text-foreground">52wk Low:</span> <span className="italic">N/A</span></p>
+                                 </div>
+                               </CardContent>
+                            </Card>
+                            {/* Interactive Line Chart */}
+                            <InteractiveLineChartComponent />
+                            {/* Grid for Pie/Line Charts */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                               {/* Pie Chart Button/Card */}
+                               {entry.pieChartData.length > 0 && (
+                                 <button 
+                                   className="text-left w-full hover:bg-muted/50 p-0 rounded-lg transition-colors duration-150" 
+                                   onClick={() => {
+                                     setExpandedAllocationData(null);
+                                     setExpandedAllocationTicker(null);
+                                     setPendingExpansionData({ 
+                                       data: entry.pieChartData, 
+                                       ticker: entry.stockData?.ticker || null 
+                                     });
+                                     setIsLoadingExpandedView(true);
+                                   }}
+                                 >
+                                   <Card className="shadow-none cursor-pointer">
+                                      <CardHeader><CardTitle>Asset Allocation (Simulated)</CardTitle><CardDescription>Distribution across asset classes.</CardDescription></CardHeader>
+                                      <CardContent className="flex items-center justify-center py-4">
+                                        <ChartContainer config={originalChartConfig} className="mx-auto aspect-square h-[200px]">
+                                          <PieChart>
+                                            <ChartTooltip content={<ChartTooltipContent hideLabel nameKey="category" />} />
+                                            <Pie data={entry.pieChartData} dataKey="value" nameKey="category" innerRadius={50} outerRadius={80} strokeWidth={2}>{entry.pieChartData.map((pieEntry, index) => (<Cell key={`cell-${index}`} fill={pieEntry.fill} />))}</Pie>
+                                            <ChartLegend content={<ChartLegendContent nameKey="category" />} />
+                                          </PieChart>
+                                        </ChartContainer>
+                                      </CardContent>
+                                      <CardFooter><div className="text-xs text-muted-foreground">Values represent simulated portfolio.</div></CardFooter>
+                                   </Card>
+                                 </button>
+                               )}
+                              {entry.lineChartData.length > 0 && (
+                                <Card className="shadow-none"> 
+                                  <CardHeader><CardTitle>Price Trend (6 Months)</CardTitle><CardDescription>Showing simulated price movement.</CardDescription></CardHeader>
+                                  <CardContent><ChartContainer config={originalChartConfig} className="h-[200px] w-full"><LineChart data={entry.lineChartData} margin={{ top: 5, right: 20, left: -10, bottom: 0 }}><CartesianGrid strokeDasharray="3 3" vertical={false}/><XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} /><YAxis tickLine={false} axisLine={false} tickMargin={8} /><Tooltip content={<ChartTooltipContent hideLabel indicator="line" />} /><Line dataKey="value" type="monotone" stroke="var(--color-value)" strokeWidth={2} dot={false} /></LineChart></ChartContainer></CardContent>
+                                  <CardFooter><div className="text-xs text-muted-foreground">Data simulated for demonstration.</div></CardFooter>
+                                </Card>
+                              )}
+                            </div>
+                            {/* Related News Card */}
+                            <Card className="shadow-none mt-6">
+                               <CardHeader>
+                                 <CardTitle className="flex items-center gap-2">
+                                   <Newspaper className="h-5 w-5 text-muted-foreground"/>
+                                   Related News
+                                 </CardTitle>
+                               </CardHeader>
+                               <CardContent>
+                                 <ul className="space-y-3">
+                                   <li className="text-sm border-b pb-3 last:border-none">
+                                     <p className="font-medium">{entry.stockData!.ticker} Announces Quarterly Earnings Beat</p>
+                                     <p className="text-xs text-muted-foreground">Source Name - 2 hours ago</p>
+                                   </li>
+                                   <li className="text-sm border-b pb-3 last:border-none">
+                                     <p className="font-medium">Analyst Upgrades {entry.stockData!.ticker} to Strong Buy</p>
+                                     <p className="text-xs text-muted-foreground">Financial News Today - 5 hours ago</p>
+                                   </li>
+                                   <li className="text-sm border-b pb-3 last:border-none">
+                                     <p className="font-medium">New Product Launch Boosts {entry.stockData!.ticker} Outlook</p>
+                                     <p className="text-xs text-muted-foreground">Tech Chronicle - Yesterday</p>
+                                   </li>
+                                 </ul>
+                               </CardContent>
+                               <CardFooter>
+                                 <Button variant="link" size="sm" className="p-0 h-auto">View More News</Button>
+                               </CardFooter>
+                             </Card>
+                          </div>
+                       ) : viewName === 'Charts' ? (
+                          // --- Charts Placeholder --- 
+                          <Card className="shadow-none">
+                            <CardHeader><CardTitle>Detailed Chart Analysis</CardTitle></CardHeader>
+                            <CardContent>
+                              <p className="text-sm text-muted-foreground mb-4">Interactive charts with multiple timeframes and technical indicators will be displayed here.</p>
+                              {/* Simulate a chart area */}
+                              <div className="aspect-video bg-muted rounded-md flex items-center justify-center">
+                                <p className="text-sm text-muted-foreground">[Chart Placeholder]</p>
+                              </div>
                             </CardContent>
-                            <CardFooter><div className="text-xs text-muted-foreground">Values represent simulated portfolio.</div></CardFooter>
                           </Card>
-                       </button>
-                      )}
-                     {entry.lineChartData.length > 0 && (
-                       <Card className="shadow-none"> 
-                         <CardHeader><CardTitle>Price Trend (6 Months)</CardTitle><CardDescription>Showing simulated price movement.</CardDescription></CardHeader>
-                         <CardContent><ChartContainer config={originalChartConfig} className="h-[200px] w-full"><LineChart data={entry.lineChartData} margin={{ top: 5, right: 20, left: -10, bottom: 0 }}><CartesianGrid strokeDasharray="3 3" vertical={false}/><XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} /><YAxis tickLine={false} axisLine={false} tickMargin={8} /><Tooltip content={<ChartTooltipContent hideLabel indicator="line" />} /><Line dataKey="value" type="monotone" stroke="var(--color-value)" strokeWidth={2} dot={false} /></LineChart></ChartContainer></CardContent>
-                         <CardFooter><div className="text-xs text-muted-foreground">Data simulated for demonstration.</div></CardFooter>
-                       </Card>
-                     )}
-                     {/* REMOVED BarChartComponent usage */}
-                     {/* <BarChartComponent /> */}
-                   </div>
-                   {/* Full-width Related News Card Placeholder */}
-                   <Card className="shadow-none mt-6"> {/* Added mt-6 */} 
-                     <CardHeader>
-                       <CardTitle className="flex items-center gap-2">
-                         <Newspaper className="h-5 w-5 text-muted-foreground"/> {/* Add icon */} 
-                         Related News
-                       </CardTitle>
-                     </CardHeader>
-                     <CardContent>
-                       <ul className="space-y-3">
-                         {/* Placeholder news items */} 
-                         <li className="text-sm border-b pb-3 last:border-none">
-                           <p className="font-medium">{entry.stockData.ticker} Announces Quarterly Earnings Beat</p>
-                           <p className="text-xs text-muted-foreground">Source Name - 2 hours ago</p>
-                         </li>
-                         <li className="text-sm border-b pb-3 last:border-none">
-                           <p className="font-medium">Analyst Upgrades {entry.stockData.ticker} to Strong Buy</p>
-                           <p className="text-xs text-muted-foreground">Financial News Today - 5 hours ago</p>
-                         </li>
-                         <li className="text-sm border-b pb-3 last:border-none">
-                           <p className="font-medium">New Product Launch Boosts {entry.stockData.ticker} Outlook</p>
-                           <p className="text-xs text-muted-foreground">Tech Chronicle - Yesterday</p>
-                         </li>
-                       </ul>
+                       ) : viewName === 'Dividends & Earnings' ? (
+                          // --- Dividends & Earnings Placeholder --- 
+                          <div className="space-y-4">
+                            <Card className="shadow-none">
+                              <CardHeader><CardTitle>Upcoming Earnings</CardTitle></CardHeader>
+                              <CardContent>
+                                <p className="text-sm"><span className="font-medium">Expected Date:</span> Aug 15, 2024 (Estimated)</p>
+                                <p className="text-sm text-muted-foreground">Past performance is not indicative of future results.</p>
+                              </CardContent>
+                            </Card>
+                            <Card className="shadow-none">
+                              <CardHeader><CardTitle>Dividend History</CardTitle></CardHeader>
+                              <CardContent>
+                                <p className="text-sm"><span className="font-medium">Last Dividend:</span> $0.25 per share</p>
+                                <p className="text-sm"><span className="font-medium">Ex-Dividend Date:</span> Jul 30, 2024</p>
+                                <p className="text-sm"><span className="font-medium">Yield (TTM):</span> {entry.stockData?.dividendYield || 'N/A'}</p>
+                                <Button variant="link" size="sm" className="p-0 h-auto mt-2">View Full History</Button>
+                              </CardContent>
+                            </Card>
+                          </div>
+                       ) : viewName === 'Sentiment' ? (
+                          // --- Sentiment Placeholder --- 
+                          <Card className="shadow-none">
+                            <CardHeader><CardTitle>Market Sentiment Analysis</CardTitle></CardHeader>
+                            <CardContent>
+                              <div className="flex items-center justify-around gap-4">
+                                <div className="text-center">
+                                  <p className="text-xs text-muted-foreground mb-1">News Sentiment</p>
+                                  <p className="text-2xl font-semibold text-green-600">78</p>
+                                  <p className="text-xs text-muted-foreground">(Positive)</p>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-xs text-muted-foreground mb-1">Social Media Buzz</p>
+                                  <p className="text-2xl font-semibold text-orange-500">Moderate</p>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-xs text-muted-foreground mb-1">Analyst Consensus</p>
+                                  <p className="text-2xl font-semibold">{entry.stockData?.analystRating || 'N/A'}</p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                       ) : (
+                          // --- Generic Placeholder Content for other views --- 
+                          <Card className="shadow-none">
+                            <CardHeader><CardTitle>{viewName} View</CardTitle></CardHeader>
+                            <CardContent>
+                              <p>Content for the {viewName} view will be displayed here.</p>
+                            </CardContent>
+                          </Card>
+                       )}
+                     </TabsContent>
+                  ))}
+                </Tabs>
+              )}
+
+              {/* General Info Section */}
+              {entry.generalInfo && (
+                <div className="mt-4 space-y-4"> {/* Add space-y back */}
+                   <Card className="shadow-none"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Definition</CardTitle><Info className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><p className="text-sm">{entry.generalInfo.definition}</p></CardContent></Card>
+                   <Card className="shadow-none">
+                     <CardHeader><CardTitle>Related Topics</CardTitle></CardHeader>
+                     <CardContent className="space-y-1">
+                        <Button variant="link" className="p-0 h-auto text-sm">Topic X</Button><br/>
+                        <Button variant="link" className="p-0 h-auto text-sm">Concept Y</Button><br/>
+                        <Button variant="link" className="p-0 h-auto text-sm">Term Z</Button>
                      </CardContent>
-                     <CardFooter>
-                       <Button variant="link" size="sm" className="p-0 h-auto">View More News</Button>
-                     </CardFooter>
                    </Card>
-              </div>
-            )}
+                </div>
+              )}
 
-            {/* General Info Section (Fallback for non-stock/news/definition) */}
-            {entry.generalInfo && (
-              <div className="space-y-4">
-                 {/* ... existing generalInfo cards ... */}
-                  <Card className="shadow-none"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Definition</CardTitle><Info className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><p className="text-sm">{entry.generalInfo.definition}</p></CardContent></Card>
-                  {/* ... other placeholder cards ... */}
-                  {/* ADDED: Placeholder Related Topics Card */}
-                  <Card className="shadow-none">
-                    <CardHeader><CardTitle>Related Topics</CardTitle></CardHeader>
-                    <CardContent className="space-y-1">
-                       <Button variant="link" className="p-0 h-auto text-sm">Topic X</Button><br/>
-                       <Button variant="link" className="p-0 h-auto text-sm">Concept Y</Button><br/>
-                       <Button variant="link" className="p-0 h-auto text-sm">Term Z</Button>
-                    </CardContent>
-                  </Card>
-               </div>
-            )}
+              {/* Fallback Section */}
+              {!entry.definitionData && !entry.myNewsData && !entry.stockData && !entry.generalInfo && ( 
+                 <div className="mt-4"> 
+                   <Card className="shadow-none"> 
+                     <CardHeader><CardTitle>No Specific Results</CardTitle></CardHeader><CardContent><p>Could not generate specific results for &quot;{entry.query}&quot;. Please try rephrasing.</p></CardContent></Card> 
+                 </div>
+              )}
 
-            {/* Fallback if somehow no data type matched */}
-            {!entry.definitionData && !entry.myNewsData && !entry.stockData && !entry.generalInfo && ( 
-              <Card className="shadow-none"><CardHeader><CardTitle>No Specific Results</CardTitle></CardHeader><CardContent><p>Could not generate specific results for &quot;{entry.query}&quot;. Please try rephrasing.</p></CardContent></Card> 
-            )}
+              {index < resultsHistory.length - 1 && <Separator className="my-6" />}
+          </Fragment>
+        );
+      })}
 
-            {index < resultsHistory.length - 1 && <Separator className="my-6" />}
-        </Fragment>
-      ))}
-
-      {/* Render Expanded View Section Conditionally (After the loop) */}
+      {/* Render Expanded View Section Conditionally */}
       {expandedAllocationData && expandedAllocationTicker && (
         <Fragment> 
-          {/* Add specific title for the expanded view - WITH ICON */}
           <h2 
             id={`title-expanded-allocation-${expandedAllocationTicker}`} 
             className="text-xl font-semibold pt-4 mt-6 flex items-center gap-2"
@@ -680,7 +795,7 @@ export default function ResultsDisplay() {
         </Fragment>
       )}
 
-      {/* Loading Indicator for Regular New Section - Use Atom */} 
+      {/* Loading Indicators */}
       {isLoadingNewSection && (
         <div ref={loaderRef} className="w-full pt-12 mt-6 flex flex-col items-center justify-center">
            <Atom className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -688,7 +803,6 @@ export default function ResultsDisplay() {
         </div>
       )}
 
-      {/* Loading Indicator for Expanded View - Use Atom */}
       {isLoadingExpandedView && (
         <div ref={expandedLoaderRef} className="w-full pt-12 mt-6 flex flex-col items-center justify-center">
            <Atom className="h-8 w-8 animate-spin text-muted-foreground" />

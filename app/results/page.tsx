@@ -21,18 +21,14 @@ function LoadingFallback() {
 export default function ResultsPage() {
   return (
     <div className="relative min-h-screen">
-      <main className="flex flex-col items-center pb-32">
-        {/* REMOVED Back Button */}
-
-        {/* Suspense boundary */}
-        <Suspense fallback={<LoadingFallback />}>
-          <ResultsDisplay />
-        </Suspense>
-
+      {/* Ensure main content has max-width and is centered */}
+      <main className="flex flex-col items-center pb-32 px-4">
+        <div className="w-full max-w-3xl"> {/* Reverted max-width */} 
+          <Suspense fallback={<LoadingFallback />}>
+            <ResultsDisplay />
+          </Suspense>
+        </div>
       </main>
-
-      {/* REMOVE Floating Input Bar - Now handled by ClientLayout */}
-      {/* <FloatingInputBar /> */}
     </div>
   );
 }
