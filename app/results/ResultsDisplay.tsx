@@ -107,12 +107,15 @@ const originalChartConfig = {
   alternatives: { label: "Alternatives", color: "hsl(var(--chart-4))" },
 } satisfies ChartConfig;
 
-const barChartData = [
-  { month: "January", desktop: 186 }, { month: "February", desktop: 305 }, { month: "March", desktop: 237 },
-  { month: "April", desktop: 73 }, { month: "May", desktop: 209 }, { month: "June", desktop: 214 },
-];
-const barChartConfig = { desktop: { label: "Desktop", color: "hsl(var(--chart-1))" } } satisfies ChartConfig;
+// REMOVE unused Bar Chart data and config
+// const barChartData = [
+//   { month: "January", desktop: 186 }, { month: "February", desktop: 305 }, { month: "March", desktop: 237 },
+//   { month: "April", desktop: 73 }, { month: "May", desktop: 209 }, { month: "June", desktop: 214 },
+// ];
+// const barChartConfig = { desktop: { label: "Desktop", color: "hsl(var(--chart-1))" } } satisfies ChartConfig;
 
+// REMOVE unused Bar Chart component definition
+/*
 function BarChartComponent() {
   return (
     <Card>
@@ -134,6 +137,7 @@ function BarChartComponent() {
     </Card>
   );
 }
+*/
 
 const interactiveLineChartData = [
   { date: "2024-04-01", desktop: 222, mobile: 150 }, { date: "2024-04-02", desktop: 97, mobile: 180 }, { date: "2024-04-03", desktop: 167, mobile: 120 },
@@ -581,7 +585,7 @@ export default function ResultsDisplay() {
                          <CardFooter><div className="text-xs text-muted-foreground">Data simulated for demonstration.</div></CardFooter>
                        </Card>
                      )}
-                     {/* REMOVED BarChartComponent */}
+                     {/* REMOVED BarChartComponent usage */}
                      {/* <BarChartComponent /> */}
                    </div>
                    {/* Full-width Related News Card Placeholder */}
