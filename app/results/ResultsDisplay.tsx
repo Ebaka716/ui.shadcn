@@ -188,8 +188,6 @@ interface LineChartDataPoint { month: string; value: number; }
 interface PieChartDataPoint { category: string; value: number; fill: string; }
 // Define General Info type explicitly for clarity
 type GeneralInfoData = ReturnType<typeof getGeneralInfo>;
-// Add type alias for clarity
-type StockData = ReturnType<typeof getStockData>;
 
 // Define the structure for each history entry
 interface ResultEntry {
@@ -410,12 +408,6 @@ export default function ResultsDisplay() {
       return () => clearTimeout(timerId); // Cleanup timer
     }
   }, [isLoadingExpandedView, pendingExpansionData]);
-
-  // Function to close the expanded view
-  const closeExpandedView = () => {
-    setExpandedAllocationData(null);
-    setExpandedAllocationTicker(null);
-  };
 
   return (
     <div ref={historyContainerRef} className="w-full space-y-6">
@@ -653,7 +645,6 @@ export default function ResultsDisplay() {
             Asset Allocation Details ({expandedAllocationTicker})
           </h2>
           <ExpandedAllocationView 
-            ticker={expandedAllocationTicker}
             data={expandedAllocationData} 
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">

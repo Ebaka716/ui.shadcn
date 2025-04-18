@@ -1,6 +1,6 @@
 import React from 'react';
 // Removed Card imports
-import { Button } from "@/components/ui/button"; 
+// import { Button } from "@/components/ui/button"; 
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,9 +11,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 interface PieChartDataPoint { category: string; value: number; fill: string; }
 
 interface ExpandedAllocationViewProps {
-  ticker: string | null;
+  // Removed unused ticker prop
+  // ticker: string | null; 
   data: PieChartDataPoint[];
-  // Removed onClose prop
 }
 
 // We need a chartConfig here too, let's reuse the structure
@@ -25,7 +25,7 @@ const chartConfig = {
   other: { label: "Other", color: "hsl(var(--chart-5))" }, // Add a fallback
 } satisfies import("@/components/ui/chart").ChartConfig;
 
-export function ExpandedAllocationView({ ticker, data }: ExpandedAllocationViewProps) {
+export function ExpandedAllocationView({ /* ticker, */ data }: ExpandedAllocationViewProps) {
   
   // Calculate total for percentage display (optional)
   // const totalValue = React.useMemo(() => {
