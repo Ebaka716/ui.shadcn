@@ -32,7 +32,8 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
   // Determine background based on route
   const isContentPage = pathname.startsWith('/results') 
-                     || pathname.startsWith('/advisor');
+                     || pathname.startsWith('/advisor')
+                     || pathname.startsWith('/confidence-demo');
   const backgroundClass = isContentPage ? 'bg-[#F9F7F5]' : 'bg-background';
 
   return (

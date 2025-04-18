@@ -45,7 +45,7 @@ export function HighConfidenceResults() {
               <p className="text-sm text-muted-foreground">Cash: $3,350.72</p>
             </CardContent>
           </Card>
-          <Card className="bg-primary/10 border-primary/40">
+          <Card>
             <CardHeader>
               <CardTitle className="text-base">Next Step: Maximize 2024</CardTitle>
             </CardHeader>
