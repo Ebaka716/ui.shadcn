@@ -42,7 +42,7 @@ export function Sidebar({
       <div
         className={cn(
           "fixed left-0 top-16 bottom-0 z-40 h-[calc(100vh-4rem)]", // Start below header (h-16 = 4rem), fill remaining height
-          "bg-sidebar border-r border-sidebar-border flex flex-col", // Use CSS variables
+          "bg-background border-r border-sidebar-border flex flex-col", // Use bg-background
           "transition-transform duration-300 ease-in-out md:transition-all", 
           "w-full", // <-- Add w-full as base width for mobile drawer
           // Mobile State:

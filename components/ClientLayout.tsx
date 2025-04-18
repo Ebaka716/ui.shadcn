@@ -34,14 +34,17 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   const isContentPage = pathname.startsWith('/results') 
                      || pathname.startsWith('/advisor')
                      || pathname.startsWith('/confidence-demo');
-  const backgroundClass = isContentPage ? 'bg-content' : 'bg-background';
+  // Use explicit background colors for light/dark content pages
+  const backgroundClass = isContentPage 
+    ? "bg-[#F9F7F5] dark:bg-neutral-900" 
+    : "bg-background"; // Default background
 
   return (
     <TooltipProvider>
       <ConfidenceProvider>
         <Header toggleMobileMenu={toggleMobileMenu} />
         
-        <div className={cn("flex h-screen pt-16", backgroundClass)}>
+        <div className={cn("flex h-screen pt-16")}>
           <Sidebar 
             isDesktopCollapsed={isDesktopCollapsed} 
             toggleDesktopSidebar={toggleDesktopSidebar} 
@@ -52,6 +55,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
             id="content-scroll-wrapper" 
             className={cn(
               "flex-1",
+              backgroundClass,
               isDesktopCollapsed ? "md:ml-16" : "md:ml-52",
               pathname === '/' 
                 ? "flex flex-col items-center justify-center overflow-hidden"
