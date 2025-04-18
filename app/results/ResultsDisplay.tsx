@@ -642,12 +642,13 @@ export default function ResultsDisplay() {
 
       {/* Render Expanded View Section Conditionally (After the loop) */}
       {expandedAllocationData && expandedAllocationTicker && (
-        <Fragment> {/* Wrap in fragment */} 
-          {/* Add specific title for the expanded view */}
+        <Fragment> 
+          {/* Add specific title for the expanded view - WITH ICON */}
           <h2 
             id={`title-expanded-allocation-${expandedAllocationTicker}`} 
-            className="text-xl font-semibold pt-4 mt-6"
+            className="text-xl font-semibold pt-4 mt-6 flex items-center gap-2"
           >
+            <Atom className="h-5 w-5 text-muted-foreground flex-shrink-0"/>
             Asset Allocation Details ({expandedAllocationTicker})
           </h2>
           <ExpandedAllocationView 
