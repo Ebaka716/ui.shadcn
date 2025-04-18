@@ -28,10 +28,10 @@ export function ClassicSearchResultsList({ maxItems }: ClassicSearchResultsListP
         <ul className="space-y-4">
           {itemsToShow.map((link, index) => (
             <li key={index}>
-              <a href={link.url} className="text-blue-600 hover:underline">
+              <a href={link.url} className="text-blue-600 dark:text-blue-400 hover:underline">
                 <h3 className="font-medium">{link.title}</h3>
               </a>
-              <p className="text-sm text-gray-600 mt-1">{link.snippet}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{link.snippet}</p>
             </li>
           ))}
         </ul>

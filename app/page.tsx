@@ -129,32 +129,41 @@ export default function Home() {
             className=""
           />
 
+          {/* Conditionally render the suggestion list */}
           {isListOpen && (
-            <CommandList className="absolute top-full mt-1 w-full rounded-md border bg-popover shadow-lg z-10">
-              {suggestions.length > 0 ? (
-                <>
-                  {['ticker', 'index', 'account', 'term', 'metric'].map(type => 
-                    groupedSuggestions[type] && (
-                      <CommandGroup heading={type.charAt(0).toUpperCase() + type.slice(1) + 's'} key={type}>
-                         {groupedSuggestions[type].map((suggestion) => (
-                          <CommandItem
-                            key={`${type}-${suggestion.value}`}
-                            value={suggestion.value}
-                            onSelect={() => handleSelect(suggestion.value)}
-                            className="flex items-center gap-2"
-                          >
-                            <Badge variant="secondary" className="capitalize">{suggestion.type}</Badge>
-                            <span>{suggestion.value}</span>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    )
-                 )}
-                </>
-              ) : (
-                <CommandEmpty>No results found.</CommandEmpty>
-              )}
-            </CommandList>
+            <> 
+              {/* Clickable overlay to close list */}
+              <div 
+                className="fixed inset-0 z-10 bg-transparent" 
+                onClick={() => setIsListOpen(false)}
+              />
+              {/* Suggestion List (increased z-index, explicit dark bg) */}
+              <CommandList className="absolute top-full mt-1 w-full rounded-md border bg-white dark:bg-neutral-900 shadow-lg z-20">
+                {suggestions.length > 0 ? (
+                  <>
+                    {['ticker', 'index', 'account', 'term', 'metric'].map(type => 
+                      groupedSuggestions[type] && (
+                        <CommandGroup heading={type.charAt(0).toUpperCase() + type.slice(1) + 's'} key={type} className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground dark:[&_[cmdk-group-heading]]:text-neutral-400">
+                           {groupedSuggestions[type].map((suggestion) => (
+                            <CommandItem
+                              key={`${type}-${suggestion.value}`}
+                              value={suggestion.value}
+                              onSelect={() => handleSelect(suggestion.value)}
+                              className="flex items-center gap-2 text-popover-foreground"
+                            >
+                              <Badge variant="secondary" className="capitalize">{suggestion.type}</Badge>
+                              <span>{suggestion.value}</span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      )
+                   )}
+                  </>
+                ) : (
+                  <CommandEmpty>No results found.</CommandEmpty>
+                )}
+              </CommandList>
+            </>
           )}
         </Command>
         <button type="submit" hidden />

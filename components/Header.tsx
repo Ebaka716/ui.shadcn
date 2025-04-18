@@ -55,8 +55,8 @@ export function Header({ toggleMobileMenu }: HeaderProps) {
             </TooltipContent>
           </Tooltip>
           
-          {/* Use arbitrary value to force the green color and make bold */}
-          <div className="font-bold text-[#368727] text-xl"> {/* Removed mr-auto */} 
+          {/* Use primary color variable for title */}
+          <div className="font-bold text-primary text-xl"> 
             Theta Corp
           </div>
         </div>

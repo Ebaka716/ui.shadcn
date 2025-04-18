@@ -34,7 +34,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   const isContentPage = pathname.startsWith('/results') 
                      || pathname.startsWith('/advisor')
                      || pathname.startsWith('/confidence-demo');
-  const backgroundClass = isContentPage ? 'bg-[#F9F7F5]' : 'bg-background';
+  const backgroundClass = isContentPage ? 'bg-content' : 'bg-background';
 
   return (
     <TooltipProvider>

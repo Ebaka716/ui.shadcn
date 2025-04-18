@@ -20,7 +20,7 @@ export function HighConfidenceResults() {
             <p>HSAs offer a triple tax advantage: contributions are tax-deductible, growth is tax-free, and withdrawals for qualified medical expenses are tax-free. Unused funds roll over year after year and can be invested, making it a powerful tool for both healthcare costs and retirement.</p>
             <div>
               <strong>Important Considerations:</strong>
-              <ul className="list-disc list-inside ml-4 text-sm">
+              <ul className="list-disc list-inside ml-4 text-sm text-neutral-700 dark:text-neutral-300">
                 <li>Must be enrolled in a High-Deductible Health Plan (HDHP).</li>
                 <li>Annual contribution limits apply (check current year&apos;s limits).</li>
                 <li>Keep records of qualified medical expenses.</li>

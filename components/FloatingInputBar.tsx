@@ -52,7 +52,7 @@ export function FloatingInputBar(/* { isDesktopCollapsed } */) {
         >
           <div 
             className={cn(
-              "rounded-lg shadow-xl bg-white overflow-hidden flex flex-col transition-colors duration-200",
+              "rounded-lg shadow-xl bg-card overflow-hidden flex flex-col transition-colors duration-200",
               isFocused ? "border border-neutral-400 dark:border-neutral-600" : "border dark:border-neutral-800"
             )}
           >
@@ -105,7 +105,7 @@ export function FloatingInputBar(/* { isDesktopCollapsed } */) {
                     <p>Focus Options</p>
                   </TooltipContent>
                 </Tooltip>
-                <DropdownMenuContent align="start">
+                <DropdownMenuContent align="start" className="bg-white dark:bg-neutral-900">
                   <DropdownMenuLabel>Focus</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onSelect={() => setFocusMode("Learning Center")}>Learning Center</DropdownMenuItem>
