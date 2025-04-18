@@ -534,10 +534,12 @@ export default function ResultsDisplay() {
                        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
                           {entry.stockData.volume && <p><span className="font-medium text-foreground">Volume:</span> {entry.stockData.volume}</p>}
                           {entry.stockData.marketCap && <p><span className="font-medium text-foreground">Mkt Cap:</span> {entry.stockData.marketCap}</p>}
-                          {/* Simplified Day High/Low for brevity */}
-                          {/* ... other stats ... */}
                           {entry.stockData.peRatio && <p><span className="font-medium text-foreground">P/E Ratio:</span> {entry.stockData.peRatio}</p>}
                           {entry.stockData.dividendYield && <p><span className="font-medium text-foreground">Div Yield:</span> {entry.stockData.dividendYield}</p>}
+                          <p><span className="font-medium text-foreground">Prev Close:</span> <span className="italic">N/A</span></p>
+                          <p><span className="font-medium text-foreground">Day&apos;s Range:</span> <span className="italic">N/A</span></p>
+                          <p><span className="font-medium text-foreground">52wk High:</span> <span className="italic">N/A</span></p>
+                          <p><span className="font-medium text-foreground">52wk Low:</span> <span className="italic">N/A</span></p>
                        </div>
                      </CardContent>
                    </Card>
@@ -579,36 +581,37 @@ export default function ResultsDisplay() {
                          <CardFooter><div className="text-xs text-muted-foreground">Data simulated for demonstration.</div></CardFooter>
                        </Card>
                      )}
-                     <BarChartComponent /> 
+                     {/* REMOVED BarChartComponent */}
+                     {/* <BarChartComponent /> */}
                    </div>
-                   {/* ADDED: Placeholder Key Financial Ratios Card */}
-                   <Card className="shadow-none">
-                     <CardHeader><CardTitle>Key Financial Ratios</CardTitle></CardHeader>
+                   {/* Full-width Related News Card Placeholder */}
+                   <Card className="shadow-none mt-6"> {/* Added mt-6 */} 
+                     <CardHeader>
+                       <CardTitle className="flex items-center gap-2">
+                         <Newspaper className="h-5 w-5 text-muted-foreground"/> {/* Add icon */} 
+                         Related News
+                       </CardTitle>
+                     </CardHeader>
                      <CardContent>
-                       <Table>
-                         <TableHeader>
-                           <TableRow>
-                             <TableHead>Ratio</TableHead>
-                             <TableHead className="text-right">Value</TableHead>
-                           </TableRow>
-                         </TableHeader>
-                         <TableBody>
-                           <TableRow>
-                             <TableCell>Debt-to-Equity</TableCell>
-                             <TableCell className="text-right">0.45</TableCell>
-                           </TableRow>
-                           <TableRow>
-                             <TableCell>Current Ratio</TableCell>
-                             <TableCell className="text-right">1.8</TableCell>
-                           </TableRow>
-                           <TableRow>
-                             <TableCell>Return on Equity (ROE)</TableCell>
-                             <TableCell className="text-right">15.2%</TableCell>
-                           </TableRow>
-                         </TableBody>
-                       </Table>
+                       <ul className="space-y-3">
+                         {/* Placeholder news items */} 
+                         <li className="text-sm border-b pb-3 last:border-none">
+                           <p className="font-medium">{entry.stockData.ticker} Announces Quarterly Earnings Beat</p>
+                           <p className="text-xs text-muted-foreground">Source Name - 2 hours ago</p>
+                         </li>
+                         <li className="text-sm border-b pb-3 last:border-none">
+                           <p className="font-medium">Analyst Upgrades {entry.stockData.ticker} to Strong Buy</p>
+                           <p className="text-xs text-muted-foreground">Financial News Today - 5 hours ago</p>
+                         </li>
+                         <li className="text-sm border-b pb-3 last:border-none">
+                           <p className="font-medium">New Product Launch Boosts {entry.stockData.ticker} Outlook</p>
+                           <p className="text-xs text-muted-foreground">Tech Chronicle - Yesterday</p>
+                         </li>
+                       </ul>
                      </CardContent>
-                     <CardFooter><p className="text-xs text-muted-foreground">Simulated ratio data.</p></CardFooter>
+                     <CardFooter>
+                       <Button variant="link" size="sm" className="p-0 h-auto">View More News</Button>
+                     </CardFooter>
                    </Card>
               </div>
             )}
