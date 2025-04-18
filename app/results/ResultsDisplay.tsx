@@ -514,7 +514,7 @@ export default function ResultsDisplay() {
               <div className="space-y-4">
                  {/* ... existing stockData cards ... */}
                    <Card className="shadow-none">
-                     <CardContent className="py-4 px-3 space-y-4"> 
+                     <CardContent className="px-6 py-4 space-y-4"> 
                        <div className="flex justify-between items-center">
                          <div>
                            <h1 className="text-3xl font-bold">{entry.stockData.ticker}</h1>
