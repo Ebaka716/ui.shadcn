@@ -3,7 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import React, { useState, useEffect, Fragment, useRef, useLayoutEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, TrendingDown, Newspaper, Info, Briefcase, Activity, Lightbulb, Loader2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Newspaper, Info, Briefcase, Activity, Lightbulb, Atom } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -414,7 +414,13 @@ export default function ResultsDisplay() {
       
       {resultsHistory.map((entry, index) => (
         <Fragment key={entry.id}>
-            <h2 id={`title-${entry.id}`} className="text-xl font-semibold pt-4 mt-6">{entry.query}</h2>
+            <h2 
+              id={`title-${entry.id}`} 
+              className="text-xl font-semibold pt-4 mt-6 flex items-center gap-2"
+            >
+              <Atom className="h-5 w-5 text-muted-foreground flex-shrink-0"/>
+              {entry.query}
+            </h2>
             
             {/* Definition Section */}
             {entry.definitionData && (
@@ -666,18 +672,18 @@ export default function ResultsDisplay() {
         </Fragment>
       )}
 
-      {/* Loading Indicator for Regular New Section */}
+      {/* Loading Indicator for Regular New Section - Use Atom */} 
       {isLoadingNewSection && (
         <div ref={loaderRef} className="w-full pt-12 mt-6 flex flex-col items-center justify-center">
-           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+           <Atom className="h-8 w-8 animate-spin text-muted-foreground" />
            <p className="text-sm text-muted-foreground pt-2 text-center">Loading results for: {processingQueryRef.current ?? currentQuery}...</p>
         </div>
       )}
 
-      {/* Loading Indicator for Expanded View */}
+      {/* Loading Indicator for Expanded View - Use Atom */}
       {isLoadingExpandedView && (
         <div ref={expandedLoaderRef} className="w-full pt-12 mt-6 flex flex-col items-center justify-center">
-           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+           <Atom className="h-8 w-8 animate-spin text-muted-foreground" />
            <p className="text-sm text-muted-foreground pt-2 text-center">Loading expanded view...</p>
         </div>
       )}

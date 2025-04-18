@@ -55,8 +55,9 @@ export function Header({ toggleMobileMenu }: HeaderProps) {
             </TooltipContent>
           </Tooltip>
           
-          {/* Use primary color variable for title */}
+          {/* Revert title div */} 
           <div className="font-bold text-primary text-xl"> 
+            {/* Removed Atom icon */}
             Theta Corp
           </div>
         </div>

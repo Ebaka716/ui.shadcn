@@ -22,6 +22,8 @@ import {
 //   DropdownMenuSeparator,
 //   DropdownMenuTrigger,
 // } from "@/components/ui/dropdown-menu";
+// Import Atom icon
+import { Atom } from "lucide-react"; 
 
 // Sample Financial Data (add type)
 const FINANCIAL_DATA = [
@@ -107,7 +109,9 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background">
-      <h1 className="mb-8 text-4xl font-semibold text-center">
+      {/* Add icon to title - No spin */}
+      <h1 className="mb-8 text-4xl font-semibold text-center flex items-center gap-3"> 
+        <Atom className="h-8 w-8" /> 
         Theta Assistant
       </h1>
 
