@@ -19,6 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, type ChartConfig } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, Bar, BarChart } from 'recharts';
 import { v4 as uuidv4 } from 'uuid'; // Import uuid
+import { ExpandedAllocationView } from '@/components/results/ExpandedAllocationView';
 
 // --- Helper functions (Could potentially be moved to a separate utils file) ---
 
@@ -187,6 +188,8 @@ interface LineChartDataPoint { month: string; value: number; }
 interface PieChartDataPoint { category: string; value: number; fill: string; }
 // Define General Info type explicitly for clarity
 type GeneralInfoData = ReturnType<typeof getGeneralInfo>;
+// Add type alias for clarity
+type StockData = ReturnType<typeof getStockData>;
 
 // Define the structure for each history entry
 interface ResultEntry {
@@ -207,11 +210,18 @@ export default function ResultsDisplay() {
 
   const [resultsHistory, setResultsHistory] = useState<ResultEntry[]>([]);
   const [isLoadingNewSection, setIsLoadingNewSection] = useState<boolean>(false);
+  // Add state for the expanded allocation view
+  const [expandedAllocationData, setExpandedAllocationData] = useState<PieChartDataPoint[] | null>(null);
+  const [expandedAllocationTicker, setExpandedAllocationTicker] = useState<string | null>(null);
+  // New state for loading expanded view
+  const [isLoadingExpandedView, setIsLoadingExpandedView] = useState<boolean>(false);
+  const [pendingExpansionData, setPendingExpansionData] = useState<{ data: PieChartDataPoint[], ticker: string | null } | null>(null);
   
   const processingQueryRef = useRef<string | null>(null);
   const historyContainerRef = useRef<HTMLDivElement>(null);
   const prevHistoryLengthRef = useRef<number>(0);
   const loaderRef = useRef<HTMLDivElement>(null);
+  const expandedLoaderRef = useRef<HTMLDivElement>(null); // Ref for expanded loader
 
   // Effect to process new queries
   useEffect(() => {
@@ -340,26 +350,72 @@ export default function ResultsDisplay() {
     }
   }, [isLoadingNewSection]);
 
-  // LayoutEffect for scrolling - change block back to 'start'
+  // LayoutEffect for scrolling - ONLY for new history entries
   useLayoutEffect(() => {
+    // Scroll to new result entry
     if (resultsHistory.length > prevHistoryLengthRef.current) {
-        const latestEntryId = resultsHistory[resultsHistory.length - 1]?.id;
-        if (latestEntryId) {
-            const targetElementId = `title-${latestEntryId}`;
-            const targetElement = document.getElementById(targetElementId);
-            if (targetElement) {
-              targetElement.scrollIntoView({ 
-                  behavior: "smooth",
-                  block: "start" 
-              });
-            }
+      const latestEntryId = resultsHistory[resultsHistory.length - 1]?.id;
+      if (latestEntryId) {
+        const targetElementId = `title-${latestEntryId}`;
+        const targetElement = document.getElementById(targetElementId);
+        if (targetElement) {
+          // Use 'start' block alignment for new results
+          targetElement.scrollIntoView({ 
+              behavior: "smooth",
+              block: "start" 
+          });
         }
-    }
+      }
+    } 
+    // Removed the else if block for expanded view
+    
     prevHistoryLengthRef.current = resultsHistory.length;
-  }, [resultsHistory]);
+  }, [resultsHistory]); // Only depend on resultsHistory
 
-  // REMOVED: renderSkeleton function 
-  // REMOVED: renderError function 
+  // Effect to handle loading and displaying the expanded view
+  useEffect(() => {
+    if (isLoadingExpandedView && pendingExpansionData) {
+      // Scroll loader into view
+      expandedLoaderRef.current?.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+
+      // Simulate loading delay
+      const timerId = setTimeout(() => {
+        // Store ticker locally before clearing pending data
+        const tickerToScrollTo = pendingExpansionData.ticker;
+        
+        // Set the actual data to render the component
+        setExpandedAllocationData(pendingExpansionData.data);
+        setExpandedAllocationTicker(pendingExpansionData.ticker);
+        setIsLoadingExpandedView(false);
+        setPendingExpansionData(null);
+
+        // Now scroll the NEWLY RENDERED title into view
+        // Use requestAnimationFrame to ensure element exists after state update
+        requestAnimationFrame(() => {
+          if (tickerToScrollTo) {
+            const targetElementId = `title-expanded-allocation-${tickerToScrollTo}`; 
+            const targetElement = document.getElementById(targetElementId);
+            targetElement?.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'start' // Match new result scroll
+            });
+          }
+        });
+
+      }, 1500); // Simulate 1.5 second load
+
+      return () => clearTimeout(timerId); // Cleanup timer
+    }
+  }, [isLoadingExpandedView, pendingExpansionData]);
+
+  // Function to close the expanded view
+  const closeExpandedView = () => {
+    setExpandedAllocationData(null);
+    setExpandedAllocationTicker(null);
+  };
 
   return (
     <div ref={historyContainerRef} className="w-full space-y-6">
@@ -488,10 +544,44 @@ export default function ResultsDisplay() {
                      </CardContent>
                    </Card>
                    <InteractiveLineChartComponent />
+                   {/* Reorder charts: Pie chart first, then Line chart, then Bar chart */}
                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                     {entry.lineChartData.length > 0 && ( <Card className="shadow-none"> <CardHeader><CardTitle>Price Trend (6 Months)</CardTitle><CardDescription>Showing simulated price movement.</CardDescription></CardHeader><CardContent><ChartContainer config={originalChartConfig} className="h-[200px] w-full"><LineChart data={entry.lineChartData} margin={{ top: 5, right: 20, left: -10, bottom: 0 }}><CartesianGrid strokeDasharray="3 3" vertical={false}/><XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} /><YAxis tickLine={false} axisLine={false} tickMargin={8} /><Tooltip content={<ChartTooltipContent hideLabel indicator="line" />} /><Line dataKey="value" type="monotone" stroke="var(--color-value)" strokeWidth={2} dot={false} /></LineChart></ChartContainer></CardContent><CardFooter><div className="text-xs text-muted-foreground">Data simulated for demonstration.</div></CardFooter></Card>)}
+                     {entry.pieChartData.length > 0 && (
+                       <button 
+                         className="text-left w-full hover:bg-muted/50 p-0 rounded-lg transition-colors duration-150" 
+                         onClick={() => {
+                           setExpandedAllocationData(null);
+                           setExpandedAllocationTicker(null);
+                           setPendingExpansionData({ 
+                             data: entry.pieChartData, 
+                             ticker: entry.stockData?.ticker || null 
+                           });
+                           setIsLoadingExpandedView(true);
+                         }}
+                       >
+                         <Card className="shadow-none cursor-pointer">
+                            <CardHeader><CardTitle>Asset Allocation (Simulated)</CardTitle><CardDescription>Distribution across asset classes.</CardDescription></CardHeader>
+                            <CardContent className="flex items-center justify-center py-4">
+                              <ChartContainer config={originalChartConfig} className="mx-auto aspect-square h-[200px]">
+                                <PieChart>
+                                  <ChartTooltip content={<ChartTooltipContent hideLabel nameKey="category" />} />
+                                  <Pie data={entry.pieChartData} dataKey="value" nameKey="category" innerRadius={50} outerRadius={80} strokeWidth={2}>{entry.pieChartData.map((pieEntry, index) => (<Cell key={`cell-${index}`} fill={pieEntry.fill} />))}</Pie>
+                                  <ChartLegend content={<ChartLegendContent nameKey="category" />} />
+                                </PieChart>
+                              </ChartContainer>
+                            </CardContent>
+                            <CardFooter><div className="text-xs text-muted-foreground">Values represent simulated portfolio.</div></CardFooter>
+                          </Card>
+                       </button>
+                      )}
+                     {entry.lineChartData.length > 0 && (
+                       <Card className="shadow-none"> 
+                         <CardHeader><CardTitle>Price Trend (6 Months)</CardTitle><CardDescription>Showing simulated price movement.</CardDescription></CardHeader>
+                         <CardContent><ChartContainer config={originalChartConfig} className="h-[200px] w-full"><LineChart data={entry.lineChartData} margin={{ top: 5, right: 20, left: -10, bottom: 0 }}><CartesianGrid strokeDasharray="3 3" vertical={false}/><XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} /><YAxis tickLine={false} axisLine={false} tickMargin={8} /><Tooltip content={<ChartTooltipContent hideLabel indicator="line" />} /><Line dataKey="value" type="monotone" stroke="var(--color-value)" strokeWidth={2} dot={false} /></LineChart></ChartContainer></CardContent>
+                         <CardFooter><div className="text-xs text-muted-foreground">Data simulated for demonstration.</div></CardFooter>
+                       </Card>
+                     )}
                      <BarChartComponent /> 
-                     {entry.pieChartData.length > 0 && (<Card className="shadow-none"><CardHeader><CardTitle>Asset Allocation (Simulated)</CardTitle><CardDescription>Distribution across asset classes.</CardDescription></CardHeader><CardContent className="flex items-center justify-center py-4"><ChartContainer config={originalChartConfig} className="mx-auto aspect-square h-[200px]"><PieChart><ChartTooltip content={<ChartTooltipContent hideLabel nameKey="category" />} /><Pie data={entry.pieChartData} dataKey="value" nameKey="category" innerRadius={50} outerRadius={80} strokeWidth={2}>{entry.pieChartData.map((pieEntry, index) => (<Cell key={`cell-${index}`} fill={pieEntry.fill} />))}</Pie><ChartLegend content={<ChartLegendContent nameKey="category" />} /></PieChart></ChartContainer></CardContent><CardFooter><div className="text-xs text-muted-foreground">Values represent simulated portfolio.</div></CardFooter></Card>)}
                    </div>
                    {/* ADDED: Placeholder Key Financial Ratios Card */}
                    <Card className="shadow-none">
@@ -552,11 +642,52 @@ export default function ResultsDisplay() {
         </Fragment>
       ))}
 
-      {/* Loading Indicator */}
+      {/* Render Expanded View Section Conditionally (After the loop) */}
+      {expandedAllocationData && expandedAllocationTicker && (
+        <Fragment> {/* Wrap in fragment */} 
+          {/* Add specific title for the expanded view */}
+          <h2 
+            id={`title-expanded-allocation-${expandedAllocationTicker}`} 
+            className="text-xl font-semibold pt-4 mt-6"
+          >
+            Asset Allocation Details ({expandedAllocationTicker})
+          </h2>
+          <ExpandedAllocationView 
+            ticker={expandedAllocationTicker}
+            data={expandedAllocationData} 
+          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            <Card>
+              <CardHeader><CardTitle className="text-base">Rebalance Options</CardTitle></CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-3">Consider rebalancing if your allocation drifts significantly.</p>
+                <Button variant="outline">Analyze Drift</Button>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle className="text-base">Explore Alternatives</CardTitle></CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-3">Learn more about alternative investments to potentially diversify.</p>
+                <Button variant="outline">Learn More</Button>
+              </CardContent>
+            </Card>
+          </div>
+        </Fragment>
+      )}
+
+      {/* Loading Indicator for Regular New Section */}
       {isLoadingNewSection && (
         <div ref={loaderRef} className="w-full pt-12 mt-6 flex flex-col items-center justify-center">
            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
            <p className="text-sm text-muted-foreground pt-2 text-center">Loading results for: {processingQueryRef.current ?? currentQuery}...</p>
+        </div>
+      )}
+
+      {/* Loading Indicator for Expanded View */}
+      {isLoadingExpandedView && (
+        <div ref={expandedLoaderRef} className="w-full pt-12 mt-6 flex flex-col items-center justify-center">
+           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+           <p className="text-sm text-muted-foreground pt-2 text-center">Loading expanded view...</p>
         </div>
       )}
     </div>
