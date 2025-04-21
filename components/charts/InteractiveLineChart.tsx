@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { LineChart, Line, XAxis, CartesianGrid } from 'recharts';
 
 // --- Chart Data and Config (Moved from ResultsDisplay) ---
 const interactiveLineChartData = [

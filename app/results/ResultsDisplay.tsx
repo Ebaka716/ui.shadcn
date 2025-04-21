@@ -4,17 +4,8 @@ import { useSearchParams } from 'next/navigation';
 import React, { useState, useEffect, Fragment, useRef, useLayoutEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, TrendingDown, Newspaper, Info, Briefcase, Activity, Lightbulb, Atom } from 'lucide-react';
+import { Newspaper, Info, Atom } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 // Import Chart Components
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, type ChartConfig } from "@/components/ui/chart";
