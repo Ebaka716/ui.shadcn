@@ -12,16 +12,6 @@ import {
   CommandGroup,   // Add CommandGroup
   CommandItem,    // Add CommandItem
 } from "@/components/ui/command";
-// Removed imports for dropdown and icons
-// import { Send, Paperclip, ChevronDown, Filter } from 'lucide-react'; 
-// import {
-//   DropdownMenu,
-//   DropdownMenuContent,
-//   DropdownMenuItem,
-//   DropdownMenuLabel,
-//   DropdownMenuSeparator,
-//   DropdownMenuTrigger,
-// } from "@/components/ui/dropdown-menu";
 // Import Atom icon
 import { Atom } from "lucide-react"; 
 
