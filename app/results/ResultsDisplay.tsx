@@ -515,8 +515,6 @@ export default function ResultsDisplay() {
           return <FileIcon className="h-3.5 w-3.5 mr-1 flex-shrink-0" />; // Default icon
         };
 
-        // Placeholder Lorem Ipsum generator (can be moved outside map if preferred)
-        const lorem = (paragraphs: number) => Array(paragraphs).fill("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.").join('\\n\\n');
         const searchLinks = [
           { title: "Investopedia: Price-to-Earnings (P/E) Ratio: Definition and How to Use It", url: "#", description: "Learn the definition of the P/E ratio, how it is calculated, its limitations, and different variations like forward P/E..." },
           { title: "Wikipedia: P/E ratio", url: "#", description: "The price–earnings ratio, also known as the P/E ratio, P/E, or PER, is the ratio of a company's share (stock) price to the company's earnings per share..." },
