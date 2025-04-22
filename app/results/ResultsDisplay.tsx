@@ -564,7 +564,7 @@ export default function ResultsDisplay() {
                          {/* Add mt-4 to subsequent headings/lists for spacing */}
                          <h4>What it is:</h4>
                          <p>
-                           The Price-to-Earnings (P/E) ratio is a widely used valuation metric that compares a company's current share price to its earnings per share (EPS).<sup>[1]</sup> It essentially indicates how much investors are willing to pay for each dollar of a company's earnings.
+                           The Price-to-Earnings (P/E) ratio is a widely used valuation metric that compares a company&apos;s current share price to its earnings per share (EPS).<sup>[1]</sup> It essentially indicates how much investors are willing to pay for each dollar of a company&apos;s earnings.
                          </p>
                          <h4 className="mt-4">Calculation:</h4>
                          <p>
