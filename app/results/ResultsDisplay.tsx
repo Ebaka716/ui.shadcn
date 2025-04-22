@@ -432,8 +432,14 @@ export default function ResultsDisplay() {
   const handleSetActiveView = (entryId: string, view: string) => {
     setActiveStockViews(prev => ({ ...prev, [entryId]: view }));
   };
+  
+  // Restore the logic inside handleExpandAllocation
   const handleExpandAllocation = (data: PieChartDataPoint[], ticker: string | null) => {
-     // ... (logic from restored file)
+    setExpandedAllocationData(null); // Clear previous data first
+    setExpandedAllocationTicker(null); 
+    setPendingExpansionData({ data, ticker }); // Set pending data
+    setIsLoadingExpandedView(true); // Start loading state
+    // The useEffect hook depending on isLoadingExpandedView will handle the rest
   };
 
   return (
@@ -742,19 +748,11 @@ export default function ResultsDisplay() {
                             <InteractiveLineChartComponent />
                             {/* Grid for Pie/Line Charts */}
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                               {/* Pie Chart Button/Card */}
+                               {/* Pie Chart Button/Card - Fix onClick */}
                                {entry.pieChartData.length > 0 && (
                                  <button 
                                    className="text-left w-full hover:bg-muted/50 p-0 rounded-lg transition-colors duration-150" 
-                                   onClick={() => {
-                                     setExpandedAllocationData(null);
-                                     setExpandedAllocationTicker(null);
-                                     setPendingExpansionData({ 
-                                       data: entry.pieChartData, 
-                                       ticker: entry.stockData?.ticker || null 
-                                     });
-                                     setIsLoadingExpandedView(true);
-                                   }}
+                                   onClick={() => handleExpandAllocation(entry.pieChartData, entry.stockData?.ticker || null)}
                                  >
                                    <Card className="shadow-none cursor-pointer">
                                       <CardHeader><CardTitle>Asset Allocation (Simulated)</CardTitle><CardDescription>Distribution across asset classes.</CardDescription></CardHeader>
