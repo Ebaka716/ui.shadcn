@@ -577,6 +577,7 @@ export default function ResultsDisplay() {
                          <h4 className="mt-4">Interpretation:</h4>
                          <ul className="mt-2"> {/* Add margin to list too */} 
                            <li>A <strong>high P/E ratio</strong> might suggest that investors expect higher earnings growth in the future compared to companies with a lower P/E ratio. It could also indicate that a stock is overvalued.<sup>[1]</sup></li>
+                           {/* eslint-disable-next-line react/no-unescaped-entities */}
                            <li>A <strong>low P/E ratio</strong> might indicate that a company is currently undervalued or that investors have lower expectations for its future growth prospects.<sup>[3]</sup></li>
                            <li>Comparing a company&apos;s P/E ratio to its historical levels or to industry peers provides more context than looking at the number in isolation.<sup>[2]</sup></li>
                          </ul>
