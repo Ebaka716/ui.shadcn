@@ -239,7 +239,7 @@ export function FloatingInputBar(/* { isDesktopCollapsed } */) {
                     size="icon" 
                     className={cn(
                       "flex-shrink-0 hover:bg-muted rounded-full",
-                      selectedFiles.length > 0 && "text-blue-600 dark:text-blue-400 bg-muted"
+                      selectedFiles.length > 0 && "text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900"
                     )}
                     onClick={() => fileInputRef.current?.click()}
                   >
