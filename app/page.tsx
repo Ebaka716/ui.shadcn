@@ -42,12 +42,6 @@ export default function Home() {
         </Button>
         <Button
           variant="outline"
-          onClick={() => navigateToResults('Market Overview')}
-        >
-          Market Overview
-        </Button>
-        <Button
-          variant="outline"
           onClick={() => navigateToResults('Explain P/E Ratio')}
         >
           Explain P/E Ratio

@@ -20,7 +20,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLe
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell } from 'recharts';
 import { v4 as uuidv4 } from 'uuid'; // Import uuid
 import { ExpandedAllocationView } from '@/components/results/ExpandedAllocationView';
-import { Newspaper, Info, Atom, FileText, Sheet, File as FileIcon, TrendingUp, TrendingDown, Briefcase, Activity, Lightbulb } from 'lucide-react'; // Re-add the lucide icons import
+import { Newspaper, Info, Atom, FileText, Sheet, File as FileIcon, TrendingUp, TrendingDown, Briefcase, Activity, Lightbulb, Search } from 'lucide-react'; // Re-add the lucide icons import
 
 // --- Helper functions (Could potentially be moved to a separate utils file) ---
 
@@ -429,6 +429,13 @@ export default function ResultsDisplay() {
     }
   }, [isLoadingExpandedView, pendingExpansionData]);
 
+  const handleSetActiveView = (entryId: string, view: string) => {
+    setActiveStockViews(prev => ({ ...prev, [entryId]: view }));
+  };
+  const handleExpandAllocation = (data: PieChartDataPoint[], ticker: string | null) => {
+     // ... (logic from restored file)
+  };
+
   return (
     <div ref={historyContainerRef} className="w-full space-y-6">
       
@@ -502,6 +509,16 @@ export default function ResultsDisplay() {
           return <FileIcon className="h-3.5 w-3.5 mr-1 flex-shrink-0" />; // Default icon
         };
 
+        // Placeholder Lorem Ipsum generator (can be moved outside map if preferred)
+        const lorem = (paragraphs: number) => Array(paragraphs).fill("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.").join('\n\n');
+        const definitionText = lorem(4);
+        const searchLinks = [
+          { title: "Investopedia: Price-to-Earnings (P/E) Ratio: Definition and How to Use It", url: "#", description: "Learn the definition of the P/E ratio, how it is calculated, its limitations, and different variations like forward P/E..." },
+          { title: "Wikipedia: P/E ratio", url: "#", description: "The price–earnings ratio, also known as the P/E ratio, P/E, or PER, is the ratio of a company's share (stock) price to the company's earnings per share..." },
+          { title: "Corporate Finance Institute: P/E Ratio - Formula, Examples and Guide to Price-to-Earnings Ratio", url: "#", description: "The Price-to-Earnings (P/E) ratio is a valuation ratio that compares a company's stock price to its earnings per share..." },
+          { title: "Search Google for: P/E Ratio explained", url: "#", description: "See more results from across the web." },
+        ];
+
         return (
           <Fragment key={entry.id}>
               {/* --- Title Section --- */}
@@ -528,8 +545,52 @@ export default function ResultsDisplay() {
               </div>
               
               {/* --- Content Area (Below Sticky Header) --- */}
+
+              {/* == START: ADDED P/E Ratio Specific View == */}
+              {entry.query === 'Explain P/E Ratio' && (
+                  <div className="mt-4 space-y-6"> 
+                    {/* Definition Card - Reduce spacing */}
+                    <Card className="shadow-md border border-blue-100"> 
+                      {/* Remove bottom padding from header */}
+                      <CardHeader className="pb-0">  
+                         <CardTitle className="flex items-center gap-2">
+                            <Lightbulb className="h-5 w-5 text-muted-foreground" />
+                            Understanding the P/E Ratio
+                         </CardTitle>
+                      </CardHeader>
+                       {/* Reduce top padding on content (was p-6 pt-4) */}
+                       <CardContent className="p-6 pt-1 prose prose-sm max-w-none dark:prose-invert"> 
+                         <p>{definitionText}</p>
+                       </CardContent>
+                    </Card>
+            
+                    {/* Search Links Card (Unchanged) */}
+                    <Card className="shadow-md border border-gray-100">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-base font-medium">
+                          <Search className="h-4 w-4 text-muted-foreground"/>
+                          Further Reading & Resources
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ul className="space-y-4">
+                          {searchLinks.map((link, index) => (
+                            <li key={index}>
+                              <a href={link.url} target="_blank" rel="noopener noreferrer" className="block group">
+                                <p className="text-sm font-medium text-blue-600 group-hover:underline">{link.title}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">{link.description}</p>
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      </CardContent>
+                    </Card>
+                  </div>
+              )}
+              {/* == END: ADDED P/E Ratio Specific View == */}
+
               {/* Definition Section */}
-              {entry.definitionData && (
+              {entry.definitionData && entry.query !== 'Explain P/E Ratio' && (
                  <div className="mt-4"> 
                    <Card className="shadow-none">
                      <CardHeader>
@@ -568,7 +629,7 @@ export default function ResultsDisplay() {
               )}
 
               {/* News Section */}
-              {entry.myNewsData && (
+              {entry.myNewsData && entry.query !== 'Explain P/E Ratio' && (
                  <div className="mt-4 space-y-6"> {/* Add space-y back */}
                    <Card className="shadow-none">
                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Top News Affecting You</CardTitle><Newspaper className="h-5 w-5 text-muted-foreground" /></CardHeader>
@@ -611,10 +672,10 @@ export default function ResultsDisplay() {
               )}
 
               {/* Stock Section - Using Tabs (Non-Sticky) */}
-              {entry.stockData && (
+              {entry.stockData && entry.query !== 'Explain P/E Ratio' && (
                  <Tabs 
                    value={activeStockViews[entry.id] || 'Overview'} 
-                   onValueChange={(value) => setActiveStockViews(prev => ({ ...prev, [entry.id]: value }))}
+                   onValueChange={(view: string) => handleSetActiveView(entry.id, view)}
                    className="w-full" 
                  >
                    {/* Wrapper for horizontal scrolling with hidden scrollbar */}
@@ -816,7 +877,7 @@ export default function ResultsDisplay() {
               )}
 
               {/* General Info Section */}
-              {entry.generalInfo && (
+              {entry.generalInfo && !entry.stockData && !entry.myNewsData && !entry.definitionData && entry.query !== 'Explain P/E Ratio' && (
                 <div className="mt-4 space-y-4"> {/* Add space-y back */}
                    <Card className="shadow-none"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium">Definition</CardTitle><Info className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><p className="text-sm">{entry.generalInfo.definition}</p></CardContent></Card>
                    <Card className="shadow-none">
@@ -831,7 +892,7 @@ export default function ResultsDisplay() {
               )}
 
               {/* Fallback Section */}
-              {!entry.definitionData && !entry.myNewsData && !entry.stockData && !entry.generalInfo && ( 
+              {!entry.stockData && !entry.myNewsData && !entry.definitionData && !entry.generalInfo && entry.query !== 'Explain P/E Ratio' && (
                  <div className="mt-4"> 
                    <Card className="shadow-none"> 
                      <CardHeader><CardTitle>No Specific Results</CardTitle></CardHeader><CardContent><p>Could not generate specific results for &quot;{entry.query}&quot;. Please try rephrasing.</p></CardContent></Card> 
