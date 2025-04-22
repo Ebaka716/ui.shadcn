@@ -5,7 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Info, Lightbulb, TrendingUp } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Table,
@@ -79,9 +79,9 @@ const demoContentByStep: { [key: number]: DemoContent } = {
               REITs like ORI primarily invest in income-producing real estate assets, aiming to generate steady income for investors, often distributed through dividends, alongside potential long-term capital appreciation. 
             </p>
             <p className="text-sm text-muted-foreground mb-2">
-              Since the query 'ORI' is very broad, providing only the company symbol, the system presents this general overview. To get more specific information, you would typically need to refine your query. For example, you could ask about:
+              Since the query &apos;ORI&apos; is very broad, providing only the company symbol, the system presents this general overview. To get more specific information, you would typically need to refine your query. For example, you could ask about:
             </p>
-            <ul className='list-disc pl-5 mt-1 text-sm text-muted-foreground'>
+            <ul className="list-disc pl-5 mt-1 text-sm text-muted-foreground">
               <li>ORI&apos;s recent financial performance</li>
               <li>Dividend history and yield</li>
               <li>Specific property types in their portfolio</li>
@@ -285,7 +285,7 @@ export default function WordCountDemoPage() {
           {/* Dynamic Results - Updated Rendering */}
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">
-              Results for: "<span className="italic">{currentContent?.exampleQuery || '...'}</span>"
+              Results for: &quot;<span className="italic">{currentContent?.exampleQuery || '...'}</span>&quot;
             </h2>
             {currentContent?.contentBlocks && currentContent.contentBlocks.length > 0 ? (
               currentContent.contentBlocks.map((block) => (
