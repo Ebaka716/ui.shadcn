@@ -172,9 +172,9 @@ export function FloatingInputBar(/* { isDesktopCollapsed } */) {
           <input 
             type="file" 
             ref={fileInputRef} 
-            onChange={handleFileChange}
-            hidden 
-            multiple
+            onChange={handleFileChange} 
+            style={{ display: 'none' }} // Use style instead of hidden attribute
+            multiple 
             accept=".pdf,.csv,.txt,.docx"
           />
 
@@ -241,7 +241,9 @@ export function FloatingInputBar(/* { isDesktopCollapsed } */) {
                       "flex-shrink-0 hover:bg-muted rounded-full",
                       selectedFiles.length > 0 && "text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900"
                     )}
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={() => {
+                      fileInputRef.current?.click();
+                    }}
                   >
                     <Paperclip className="h-4 w-4" />
                     <span className="sr-only">Attach file</span>
@@ -277,7 +279,6 @@ export function FloatingInputBar(/* { isDesktopCollapsed } */) {
               </DropdownMenu>
             </div>
           </div>
-          <button type="submit" hidden />
         </form>
       </div>
     </div>
