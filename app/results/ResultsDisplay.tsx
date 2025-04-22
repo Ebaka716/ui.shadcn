@@ -4,7 +4,6 @@ import { useSearchParams } from 'next/navigation';
 import React, { useState, useEffect, Fragment, useRef, useLayoutEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, TrendingDown, Newspaper, Info, Briefcase, Activity, Lightbulb, Atom } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -21,6 +20,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLe
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell } from 'recharts';
 import { v4 as uuidv4 } from 'uuid'; // Import uuid
 import { ExpandedAllocationView } from '@/components/results/ExpandedAllocationView';
+import { Newspaper, Info, Atom, FileText, Sheet, File as FileIcon, TrendingUp, TrendingDown, Briefcase, Activity, Lightbulb } from 'lucide-react'; // Re-add the lucide icons import
 
 // --- Helper functions (Could potentially be moved to a separate utils file) ---
 
@@ -438,16 +438,94 @@ export default function ResultsDisplay() {
           'Analyst Ratings', 'Comparison', 'Statistics'
         ];
 
+        // --- Logic to extract attachments and query text for context badge(s) ---
+        interface AttachmentInfo {
+          name: string;
+          type: string;
+        }
+        let attachments: AttachmentInfo[] = [];
+        let displayQuery = entry.query;
+
+        const questionPrefix = "Question about ";
+        const analyzePrefix = "Analyze file: ";
+
+        // Log the incoming query and the prefixes for debugging
+        console.log(`[ResultsDisplay] Rendering Entry ID: ${entry.id}`);
+        console.log(`  Original Query: "${entry.query}"`);
+        console.log(`  Starts with Question Prefix? ${entry.query.startsWith(questionPrefix)}`);
+        console.log(`  Starts with Analyze Prefix? ${entry.query.startsWith(analyzePrefix)}`);
+
+        let fileInfoString = "";
+        if (entry.query.startsWith(questionPrefix)) {
+          const parts = entry.query.substring(questionPrefix.length).split(': ');
+          if (parts.length >= 2) {
+            fileInfoString = parts[0];
+            displayQuery = parts.slice(1).join(': '); // Get the rest as the query
+          }
+        } else if (entry.query.startsWith(analyzePrefix)) {
+          fileInfoString = entry.query.substring(analyzePrefix.length);
+          // Keep displayQuery as is for now, might need refinement later if only file is present
+          // displayQuery = `Analysis of [filename]`; // Placeholder if needed
+        }
+
+        // Parse the fileInfoString (e.g., "filename.pdf|application/pdf")
+        if (fileInfoString) {
+          const fileParts = fileInfoString.split('|');
+          if (fileParts.length === 2) {
+            attachments = [{ name: fileParts[0], type: fileParts[1] }];
+            // If it was an analyze query with no text, set a default display query
+            if (entry.query.startsWith(analyzePrefix) && displayQuery === entry.query) {
+                 displayQuery = `Analysis of ${fileParts[0]}`;
+            }
+          } else {
+            // Fallback if parsing fails (e.g., filename has '|')
+            attachments = [{ name: fileInfoString, type: '' }]; // Store name, unknown type
+             if (entry.query.startsWith(analyzePrefix) && displayQuery === entry.query) {
+                 displayQuery = `Analysis of ${fileInfoString}`;
+            }
+          }
+        }
+
+        // Log the result of parsing
+        console.log(`  Extracted Attachments: ${JSON.stringify(attachments)}`);
+        console.log(`  Display Query: "${displayQuery}"`);
+        // --- End parsing logic ---
+
+        // --- Helper function to get icon based on MIME type ---
+        const getFileIcon = (mimeType: string) => {
+          if (mimeType.startsWith('text/csv')) {
+            return <Sheet className="h-3.5 w-3.5 mr-1 flex-shrink-0" />;
+          }
+          if (mimeType.startsWith('application/pdf') || mimeType.startsWith('text/') || mimeType.includes('document')) {
+            return <FileText className="h-3.5 w-3.5 mr-1 flex-shrink-0" />;
+          }
+          return <FileIcon className="h-3.5 w-3.5 mr-1 flex-shrink-0" />; // Default icon
+        };
+
         return (
           <Fragment key={entry.id}>
-              {/* --- Standard H2 --- */}
-              <h2 
-                id={`title-${entry.id}`} 
-                className="text-xl font-semibold pt-4 mt-6 flex items-center gap-2" /* Restored original classes */
-              >
-                <Atom className="h-5 w-5 text-muted-foreground flex-shrink-0"/>
-                {entry.query}
-              </h2>
+              {/* --- Title Section --- */}
+              <div className="mt-6"> 
+                {/* Main Title */} 
+                <h2 
+                  id={`title-${entry.id}`} 
+                  className="text-xl font-semibold flex items-center gap-2"
+                >
+                  <Atom className="h-5 w-5 text-muted-foreground flex-shrink-0"/>
+                  {displayQuery} {/* Display the extracted query */}
+                </h2>
+                {/* Attachment Context Badges (Below Title) */}
+                {attachments.length > 0 && (
+                  <div className="mt-1 pl-7 flex flex-wrap gap-1"> {/* Indent to align with title text, adjusted margin */}
+                    {attachments.map((attachment, idx) => (
+                      <Badge key={idx} variant="secondary" className="text-xs font-normal inline-flex items-center px-2.5 py-0.5">
+                        {getFileIcon(attachment.type)}
+                        <span className="truncate">{attachment.name}</span>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
               
               {/* --- Content Area (Below Sticky Header) --- */}
               {/* Definition Section */}
