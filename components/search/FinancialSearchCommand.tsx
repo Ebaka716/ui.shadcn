@@ -16,7 +16,6 @@ import {
   fuseOptions,
   typeToIconMap,
   SuggestionItem, // Import the interface
-  IconMap, // Import the type
 } from "@/lib/data/financial-terms";
 
 // Create a Fuse instance outside the component for performance
