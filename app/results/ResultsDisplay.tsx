@@ -555,23 +555,59 @@ export default function ResultsDisplay() {
               {/* == START: ADDED P/E Ratio Specific View == */}
               {entry.query === 'Explain P/E Ratio' && (
                   <div className="mt-4 space-y-6"> 
-                    {/* Definition Card - Reduce spacing */}
-                    <Card className="shadow-md border border-blue-100"> 
-                      {/* Remove bottom padding from header */}
-                      <CardHeader className="pb-0">  
+                    {/* Definition Card - Add shadow-none */}
+                    <Card className="border shadow-none"> 
+                      <CardHeader className="pb-2">
                          <CardTitle className="flex items-center gap-2">
                             <Lightbulb className="h-5 w-5 text-muted-foreground" />
                             Understanding the P/E Ratio
                          </CardTitle>
                       </CardHeader>
-                       {/* Reduce top padding on content (was p-6 pt-4) */}
-                       <CardContent className="p-6 pt-1 prose prose-sm max-w-none dark:prose-invert"> 
-                         <p>{definitionText}</p>
+                       <CardContent className="p-6 pt-1 prose prose-sm max-w-none dark:prose-invert">
+                         {/* Add mt-4 to subsequent headings/lists for spacing */}
+                         <h4>What it is:</h4>
+                         <p>
+                           The Price-to-Earnings (P/E) ratio is a widely used valuation metric that compares a company's current share price to its earnings per share (EPS).<sup>[1]</sup> It essentially indicates how much investors are willing to pay for each dollar of a company's earnings.
+                         </p>
+                         <h4 className="mt-4">Calculation:</h4>
+                         <p>
+                           It's calculated simply as:
+                           <br />
+                           <strong>P/E Ratio = Market Value per Share / Earnings Per Share (EPS)</strong>
+                           <br />
+                           Earnings Per Share (EPS) is typically calculated over the trailing twelve months (TTM).<sup>[2]</sup>
+                         </p>
+                         <h4 className="mt-4">Interpretation:</h4>
+                         <ul className="mt-2"> {/* Add margin to list too */} 
+                           <li>A <strong>high P/E ratio</strong> might suggest that investors expect higher earnings growth in the future compared to companies with a lower P/E ratio. It could also indicate that a stock is overvalued.<sup>[1]</sup></li>
+                           <li>A <strong>low P/E ratio</strong> might indicate that a company is currently undervalued or that investors have lower expectations for its future growth prospects.<sup>[3]</sup></li>
+                           <li>Comparing a company's P/E ratio to its historical levels or to industry peers provides more context than looking at the number in isolation.<sup>[2]</sup></li>
+                         </ul>
+                         <h4 className="mt-4">Limitations:</h4>
+                         <ul className="mt-2"> {/* Add margin to list too */} 
+                           <li>P/E ratios can be misleading if earnings are negative or highly volatile.</li>
+                           <li>Accounting practices can affect reported earnings, impacting the ratio.</li>
+                           <li>It doesn't account for debt levels or cash flow directly.<sup>[3]</sup></li>
+                         </ul>
                        </CardContent>
+                       {/* Restyle CardFooter for source cards and add heading */}
+                       <CardFooter className="flex flex-wrap gap-2 pt-4 border-t bg-muted/50 p-4">
+                         {/* ADDED: Small heading for sources */}
+                         <p className="w-full text-xs font-medium text-muted-foreground mb-2">Sources:</p>
+                         {[ 
+                           { id: 1, text: "Investopedia - P/E Ratio Explained" },
+                           { id: 2, text: "Corporate Finance Institute - Price-to-Earnings Ratio" },
+                           { id: 3, text: "Wall Street Journal - Guide to Stock Valuation" }
+                         ].map(source => (
+                           <Card key={source.id} className="p-2 shadow-none border bg-card text-xs">
+                             <p><sup>[{source.id}]</sup> {source.text}</p>
+                           </Card>
+                         ))}
+                       </CardFooter>
                     </Card>
             
-                    {/* Search Links Card (Unchanged) */}
-                    <Card className="shadow-md border border-gray-100">
+                    {/* Search Links Card - Add shadow-none */}
+                    <Card className="border shadow-none">
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-base font-medium">
                           <Search className="h-4 w-4 text-muted-foreground"/>
