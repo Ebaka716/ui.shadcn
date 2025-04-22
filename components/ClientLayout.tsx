@@ -33,7 +33,8 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   // Determine background based on route
   const isContentPage = pathname.startsWith('/results') 
                      || pathname.startsWith('/advisor')
-                     || pathname.startsWith('/confidence-demo');
+                     || pathname.startsWith('/confidence-demo')
+                     || pathname.startsWith('/word-count-demo');
   // Use explicit background colors for light/dark content pages
   const backgroundClass = isContentPage 
     ? "bg-[#F9F7F5] dark:bg-neutral-900" 

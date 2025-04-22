@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { PanelLeftClose, PanelRightClose, Plus, X, Gauge } from 'lucide-react'; // Icons for toggling
+import { PanelLeftClose, PanelRightClose, Plus, X, Gauge, ListOrdered } from 'lucide-react'; // Icons for toggling
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -131,6 +131,21 @@ export function Sidebar({
             {/* Re-apply explicit black background for tooltip content */}
             <TooltipContent side="right" className="bg-black text-white px-3 py-1.5 text-xs rounded-md">
               <p>Confidence Demo</p>
+            </TooltipContent>
+          </Tooltip>
+
+          {/* Word Count Demo Item */}
+          <Tooltip>
+            <TooltipTrigger asChild disabled={tooltipsDisabled}>
+              <Link href="/word-count-demo" passHref className="block">
+                <Button variant="ghost" className={cn("w-full justify-start", isDesktopCollapsed && "md:justify-center")}>
+                  <ListOrdered className="h-5 w-5 md:mr-2" />
+                  <span className={cn(isDesktopCollapsed && "md:hidden")}>Word Count Demo</span>
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="bg-black text-white px-3 py-1.5 text-xs rounded-md">
+              <p>Word Count Demo</p>
             </TooltipContent>
           </Tooltip>
 
