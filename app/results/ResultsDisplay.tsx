@@ -516,8 +516,7 @@ export default function ResultsDisplay() {
         };
 
         // Placeholder Lorem Ipsum generator (can be moved outside map if preferred)
-        const lorem = (paragraphs: number) => Array(paragraphs).fill("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.").join('\n\n');
-        const definitionText = lorem(4);
+        const lorem = (paragraphs: number) => Array(paragraphs).fill("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.").join('\\n\\n');
         const searchLinks = [
           { title: "Investopedia: Price-to-Earnings (P/E) Ratio: Definition and How to Use It", url: "#", description: "Learn the definition of the P/E ratio, how it is calculated, its limitations, and different variations like forward P/E..." },
           { title: "Wikipedia: P/E ratio", url: "#", description: "The price–earnings ratio, also known as the P/E ratio, P/E, or PER, is the ratio of a company's share (stock) price to the company's earnings per share..." },
@@ -571,7 +570,7 @@ export default function ResultsDisplay() {
                          </p>
                          <h4 className="mt-4">Calculation:</h4>
                          <p>
-                           It's calculated simply as:
+                           It&apos;s calculated simply as:
                            <br />
                            <strong>P/E Ratio = Market Value per Share / Earnings Per Share (EPS)</strong>
                            <br />
@@ -581,13 +580,13 @@ export default function ResultsDisplay() {
                          <ul className="mt-2"> {/* Add margin to list too */} 
                            <li>A <strong>high P/E ratio</strong> might suggest that investors expect higher earnings growth in the future compared to companies with a lower P/E ratio. It could also indicate that a stock is overvalued.<sup>[1]</sup></li>
                            <li>A <strong>low P/E ratio</strong> might indicate that a company is currently undervalued or that investors have lower expectations for its future growth prospects.<sup>[3]</sup></li>
-                           <li>Comparing a company's P/E ratio to its historical levels or to industry peers provides more context than looking at the number in isolation.<sup>[2]</sup></li>
+                           <li>Comparing a company&apos;s P/E ratio to its historical levels or to industry peers provides more context than looking at the number in isolation.<sup>[2]</sup></li>
                          </ul>
                          <h4 className="mt-4">Limitations:</h4>
                          <ul className="mt-2"> {/* Add margin to list too */} 
                            <li>P/E ratios can be misleading if earnings are negative or highly volatile.</li>
                            <li>Accounting practices can affect reported earnings, impacting the ratio.</li>
-                           <li>It doesn't account for debt levels or cash flow directly.<sup>[3]</sup></li>
+                           <li>It doesn&apos;t account for debt levels or cash flow directly.<sup>[3]</sup></li>
                          </ul>
                        </CardContent>
                        {/* Restyle CardFooter for source cards and add heading */}
